@@ -1,0 +1,17 @@
+name = "ErrorCorrection"
+version = "0.1.0"
+defaultTargets = ["errorcorrection"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4.git"
+
+[[lean_lib]]
+name = "ErrorCorrection"
+
+[[lean_lib]]
+name = "Supersymmetric"
+
+[[lean_exe]]
+name = "errorcorrection"
+root = "Main"
