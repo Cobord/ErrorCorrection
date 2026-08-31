@@ -309,6 +309,22 @@ lemma cliffordExtend_fixes_complement (hS : S.carrier ⊆ U.carrier) (hT : T.car
   rw [hy, cliffordExtend_centralProdHom_apply, prodExtend_apply, map_one, centralProdHom_apply,
     map_one, one_mul]
 
+/-- `cliffordExtend φ` fixes every point supported on *any* region `R` disjoint from `S` — not
+just the specific complement `T` it was built with: since `R ⊆ U ⊆ S ∪ T` and `R` is disjoint
+from `S`, `R ⊆ T`, so a point supported on `R` is in particular supported on `T`, hence fixed by
+`cliffordExtend_fixes_complement`. -/
+lemma cliffordExtend_fixes_disjoint (hS : S.carrier ⊆ U.carrier) (hT : T.carrier ⊆ U.carrier)
+    (hdisj : Disjoint S.carrier T.carrier) (hcov : U.carrier ⊆ S.carrier ∪ T.carrier)
+    (φ : CliffordGroup ↥S.carrier d) {R : RegionCat X} (hR : R.carrier ⊆ U.carrier)
+    (hdisjR : Disjoint S.carrier R.carrier) (z : PauliGroup ↥R.carrier d) :
+    cliffordExtend hS hT hdisj hcov φ (quditInclusionHom hR z) = quditInclusionHom hR z := by
+  have hRT : R.carrier ⊆ T.carrier := fun a ha =>
+    (Finset.mem_union.mp (hcov (hR ha))).resolve_left (Finset.disjoint_left.mp hdisjR.symm ha)
+  have e : quditInclusionHom hR z = quditInclusionHom hT (quditInclusionHom hRT z) := by
+    rw [← MonoidHom.comp_apply, ← quditInclusionHom_trans hRT hT]
+  rw [e]
+  exact cliffordExtend_fixes_complement hS hT hdisj hcov φ (quditInclusionHom hRT z)
+
 end CentralProduct
 
 /-! ### The Clifford functor
@@ -343,6 +359,23 @@ private lemma cliffordInclusionHom_apply {S T : RegionCat X} (h : S.carrier ⊆ 
     (φ : CliffordGroup ↥S.carrier d) :
     (cliffordInclusionHom h φ).1
       = cliffordExtend h Finset.sdiff_subset (complementDisjoint h) (complementCov h) φ := rfl
+
+/-- `cliffordExtend` doesn't actually depend on which valid complement `(T, hT, hdisj, hcov)` it
+is built with: it always agrees with `cliffordInclusionHom`, which fixes the canonical
+complement `T.carrier \ S.carrier`. Proved by decomposing an arbitrary point via `hS`/`hT` and
+checking the two sides agree on each piece (`cliffordExtend_quditInclusionHom` on the `S`-part,
+`cliffordExtend_fixes_disjoint` on the `T`-part). -/
+lemma cliffordExtend_eq_cliffordInclusionHom {S T U : RegionCat X} (hS : S.carrier ⊆ U.carrier)
+    (hT : T.carrier ⊆ U.carrier) (hdisj : Disjoint S.carrier T.carrier)
+    (hcov : U.carrier ⊆ S.carrier ∪ T.carrier) (φ : CliffordGroup ↥S.carrier d) :
+    cliffordExtend hS hT hdisj hcov φ = (cliffordInclusionHom hS φ).1 := by
+  apply MulEquiv.ext
+  intro z
+  obtain ⟨⟨x, y⟩, rfl⟩ := centralProdHom_surjective hS hT hdisj hcov z
+  rw [cliffordExtend_centralProdHom_apply, prodExtend_apply, centralProdHom_apply,
+    centralProdHom_apply, map_mul, cliffordInclusionHom_apply, cliffordExtend_quditInclusionHom,
+    cliffordExtend_fixes_disjoint hS Finset.sdiff_subset (complementDisjoint hS)
+      (complementCov hS) φ hT hdisj y]
 
 lemma cliffordInclusionHom_injective {S T : RegionCat X} (h : S.carrier ⊆ T.carrier) :
     Function.Injective (cliffordInclusionHom (d := d) h) := by
@@ -424,6 +457,22 @@ lemma cliffordInclusionHom_trans {S T U : RegionCat X} (hf : S.carrier ⊆ T.car
       cliffordInclusionHom_apply, cliffordExtend_quditInclusionHom]
   rw [hLHS, hRHS]
 
+/-- `cliffordInclusionHom` sends the trivial inclusion to the identity homomorphism: the first
+functor law. -/
+lemma cliffordInclusionHom_refl {S : RegionCat X} :
+    cliffordInclusionHom (d := d) (Finset.Subset.refl S.carrier)
+      = MonoidHom.id (CliffordGroup ↥S.carrier d) := by
+  apply MonoidHom.ext
+  intro φ
+  apply Subtype.ext
+  rw [cliffordInclusionHom_apply, MonoidHom.id_apply]
+  apply MulEquiv.ext
+  intro x
+  have hnat := cliffordExtend_quditInclusionHom (Finset.Subset.refl S.carrier)
+    Finset.sdiff_subset (complementDisjoint (Finset.Subset.refl S.carrier))
+    (complementCov (Finset.Subset.refl S.carrier)) φ x
+  rwa [quditInclusionHom_refl, MonoidHom.id_apply, MonoidHom.id_apply] at hnat
+
 /-- The functor sending a finite region of qudits to its Clifford group, and a region inclusion
 to the induced "extend trivially on the complement" homomorphism. -/
 noncomputable def cliffordInclusionFunctor (X : Type u) [DecidableEq X] (d : ℕ) :
@@ -436,17 +485,8 @@ noncomputable def cliffordInclusionFunctor (X : Type u) [DecidableEq X] (d : ℕ
     apply Subtype.ext
     show cliffordInclusionHom (d := d) (RegionCat.subsetOfHom (𝟙 S))
         = MonoidHom.id (CliffordGroup ↥S.carrier d)
-    rw [show RegionCat.subsetOfHom (𝟙 S) = Finset.Subset.refl S.carrier from rfl]
-    apply MonoidHom.ext
-    intro φ
-    apply Subtype.ext
-    rw [cliffordInclusionHom_apply, MonoidHom.id_apply]
-    apply MulEquiv.ext
-    intro x
-    have hnat := cliffordExtend_quditInclusionHom (Finset.Subset.refl S.carrier)
-      Finset.sdiff_subset (complementDisjoint (Finset.Subset.refl S.carrier))
-      (complementCov (Finset.Subset.refl S.carrier)) φ x
-    rwa [quditInclusionHom_refl, MonoidHom.id_apply, MonoidHom.id_apply] at hnat
+    rw [show RegionCat.subsetOfHom (𝟙 S) = Finset.Subset.refl S.carrier from rfl,
+      cliffordInclusionHom_refl]
   map_comp {S T U} f g := by
     apply Subtype.ext
     show cliffordInclusionHom (d := d) (RegionCat.subsetOfHom (f ≫ g))
@@ -455,6 +495,52 @@ noncomputable def cliffordInclusionFunctor (X : Type u) [DecidableEq X] (d : ℕ
     rw [show RegionCat.subsetOfHom (f ≫ g)
           = Finset.Subset.trans (RegionCat.subsetOfHom f) (RegionCat.subsetOfHom g) from rfl,
       cliffordInclusionHom_trans (RegionCat.subsetOfHom f) (RegionCat.subsetOfHom g)]
+
+/-- Clifford automorphisms extended from disjoint regions `S`, `T` (covering, together, a common
+region `U`) commute: each fixes the other's support (`cliffordExtend_fixes_disjoint`), and the
+underlying Pauli group elements they twist commute in the first place
+(`commute_of_disjoint_range`). -/
+lemma commute_of_disjoint_cliffordInclusionHom {S T U : RegionCat X} (hS : S.carrier ⊆ U.carrier)
+    (hT : T.carrier ⊆ U.carrier) (hdisj : Disjoint S.carrier T.carrier)
+    (hcov : U.carrier ⊆ S.carrier ∪ T.carrier) (φ : CliffordGroup ↥S.carrier d)
+    (ψ : CliffordGroup ↥T.carrier d) :
+    Commute (cliffordInclusionHom hS φ) (cliffordInclusionHom hT ψ) := by
+  have hcov' : U.carrier ⊆ T.carrier ∪ S.carrier := by rw [Finset.union_comm]; exact hcov
+  apply Subtype.ext
+  show (cliffordInclusionHom hS φ).1 * (cliffordInclusionHom hT ψ).1
+      = (cliffordInclusionHom hT ψ).1 * (cliffordInclusionHom hS φ).1
+  rw [← cliffordExtend_eq_cliffordInclusionHom hS hT hdisj hcov,
+    ← cliffordExtend_eq_cliffordInclusionHom hT hS hdisj.symm hcov']
+  apply MulEquiv.ext
+  intro z
+  obtain ⟨⟨x, y⟩, rfl⟩ := centralProdHom_surjective hS hT hdisj hcov z
+  have hswap : ∀ (a : PauliGroup ↥S.carrier d) (b : PauliGroup ↥T.carrier d),
+      centralProdHom hS hT hdisj (a, b) = centralProdHom hT hS hdisj.symm (b, a) := by
+    intro a b
+    rw [centralProdHom_apply, centralProdHom_apply]
+    exact commute_of_disjoint_range hS hT hdisj a b
+  have hLHS : (cliffordExtend hS hT hdisj hcov φ * cliffordExtend hT hS hdisj.symm hcov' ψ)
+      (centralProdHom hS hT hdisj (x, y))
+      = quditInclusionHom hS (φ.1 x) * quditInclusionHom hT (ψ.1 y) := by
+    have step1 : cliffordExtend hT hS hdisj.symm hcov' ψ (centralProdHom hS hT hdisj (x, y))
+        = centralProdHom hT hS hdisj.symm (ψ.1 y, x) := by
+      rw [hswap x y, cliffordExtend_centralProdHom_apply, prodExtend_apply]
+    have step2 : centralProdHom hT hS hdisj.symm (ψ.1 y, x) = centralProdHom hS hT hdisj (x, ψ.1 y) :=
+      (hswap x (ψ.1 y)).symm
+    rw [MulAut.mul_apply, step1, step2, cliffordExtend_centralProdHom_apply, prodExtend_apply,
+      centralProdHom_apply]
+  have hRHS : (cliffordExtend hT hS hdisj.symm hcov' ψ * cliffordExtend hS hT hdisj hcov φ)
+      (centralProdHom hS hT hdisj (x, y))
+      = quditInclusionHom hT (ψ.1 y) * quditInclusionHom hS (φ.1 x) := by
+    have step1 : cliffordExtend hS hT hdisj hcov φ (centralProdHom hS hT hdisj (x, y))
+        = centralProdHom hS hT hdisj (φ.1 x, y) := by
+      rw [cliffordExtend_centralProdHom_apply, prodExtend_apply]
+    have step2 : centralProdHom hS hT hdisj (φ.1 x, y) = centralProdHom hT hS hdisj.symm (y, φ.1 x) :=
+      hswap (φ.1 x) y
+    rw [MulAut.mul_apply, step1, step2, cliffordExtend_centralProdHom_apply, prodExtend_apply,
+      centralProdHom_apply]
+  rw [hLHS, hRHS]
+  exact commute_of_disjoint_range hS hT hdisj (φ.1 x) (ψ.1 y)
 
 end Functor
 

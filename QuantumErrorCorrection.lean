@@ -3,6 +3,7 @@ import QuantumErrorCorrection.GroupAlgebraStar
 import QuantumErrorCorrection.GrpInclCat
 import QuantumErrorCorrection.Pauli
 import QuantumErrorCorrection.PauliCliffordFunctor
+import QuantumErrorCorrection.PauliCliffordQuasiLocalAlgebra
 import QuantumErrorCorrection.PauliFunctor
 import QuantumErrorCorrection.PauliQuasiLocalAlgebra
 import QuantumErrorCorrection.QuasiLocalAlgebra
