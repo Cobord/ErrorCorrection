@@ -10,6 +10,9 @@ git = "https://github.com/leanprover-community/mathlib4.git"
 name = "ErrorCorrection"
 
 [[lean_lib]]
+name = "QuantumErrorCorrection"
+
+[[lean_lib]]
 name = "Supersymmetric"
 
 [[lean_exe]]
