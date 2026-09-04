@@ -45,6 +45,30 @@ quasi-local algebras built from them on a finite (or arbitrary) set of qudits.
 - [`PauliCliffordQuasiLocalAlgebra.lean`](PauliCliffordQuasiLocalAlgebra.lean) — Assembles the
   group algebra of the Clifford group net into a concrete `QuasiLocalAlgebra` instance, mirroring
   `PauliQuasiLocalAlgebra.lean` with `CliffordGroup` in place of `PauliGroup`.
+- [`PointedConeCat.lean`](PointedConeCat.lean) — `PointedConeCat R`, the category of modules over
+  an ordered ring `R` equipped with a distinguished `PointedCone R`, whose morphisms are the
+  `R`-linear maps carrying one cone into the other (so a functor into it is a net of cones). The
+  explicit name avoids collision with `CategoryTheory.Limits.Cone`.
+- [`PointedConeAlgCat.lean`](PointedConeAlgCat.lean) — `PointedConeAlgCat R`, the algebra-valued
+  refinement of `PointedConeCat R`: objects are `R`-algebras with a distinguished `PointedCone R`
+  and morphisms are cone-preserving `R`-*algebra* homomorphisms. The intended target for the
+  stoquastic net, whose objects are matrix algebras and whose structure maps `A ↦ A ⊗ 1` are
+  unital algebra maps, not merely linear ones. `forgetMul : PointedConeAlgCat R ⥤
+  PointedConeCat R` is the (faithful) forgetful functor discarding the multiplication.
+- [`Stoquastic.lean`](Stoquastic.lean) — `isStoquastic`: a matrix on the qudit configurations
+  `S.carrier → Fin d` of a region has non-positive off-diagonal entries (so the associated
+  quantum Monte Carlo is sign-problem free). Stoquastic matrices on a region form a convex cone
+  (`isStoquastic_add`, `isStoquastic_smul`, `isStoquastic_sum_smul`: conic — in particular
+  positive — combinations of stoquastic terms stay stoquastic). `extendAlongRegion` views such a
+  matrix on a larger
+  region along a morphism of `RegionCat X`, acting as the identity on the new qudits `T \ S`
+  (i.e. `A ⊗ 1`), functorially (`extendAlongRegion_id`, `extendAlongRegion_comp`); by
+  `isStoquastic_extendAlongRegion` this preserves stoquasticity. Over a commutative `R` the
+  extension is an algebra map (`extendAlongRegionₐ`: `1 ⊗ 1 = 1` and
+  `(A ⊗ 1)(B ⊗ 1) = (A B) ⊗ 1`) and not just linear (`extendAlongRegionₗ`), so these assemble
+  into `stoquasticFunctor : RegionCat X ⥤ PointedConeAlgCat R`, the net of stoquastic cones in
+  the region matrix algebras; `stoquasticFunctorₗ` is the same net composed with `forgetMul`,
+  valued in `PointedConeCat R`.
 
 ## Building
 
