@@ -51,7 +51,7 @@ None of this section refers to `RegionCat`; it is reused below to build the regi
 variable {d : ℕ}
 
 /-- Extend a vector of exponents along an arbitrary embedding, padding with `0` outside the
-image. Public: reused by later files (e.g. the Clifford-group functor) building further
+image. Public: reused by later files (e.g. the Clifford automorphism functor) building further
 "combine along disjoint regions" constructions on top of the region-inclusion machinery below. -/
 public noncomputable def extendAlong {α β : Type u} (f : α ↪ β) (a : α → ZMod d) :
     β → ZMod d :=
@@ -229,7 +229,7 @@ embedding of one region's qudits into another's. -/
 variable {X : Type u}
 
 /-- The embedding of qudit subtypes induced by a region inclusion `S.carrier ⊆ T.carrier`.
-Public: reused by later files (e.g. the Clifford-group functor) building further "combine along
+Public: reused by later files (e.g. the Clifford automorphism functor) building further "combine along
 disjoint regions" constructions. -/
 @[expose] public def regionInclusionEmbedding {S T : RegionCat X} (h : S.carrier ⊆ T.carrier) :
     (↥S.carrier : Type u) ↪ (↥T.carrier : Type u) :=
@@ -237,7 +237,7 @@ disjoint regions" constructions. -/
 
 /-- The coercion of `regionInclusionEmbedding h i` back to `X` is just the coercion of `i`: the
 embedding only changes which region's subtype the qudit label lives in, not the label itself.
-Public: needed by later files (e.g. the Clifford-group functor) to relate memberships across
+Public: needed by later files (e.g. the Clifford automorphism functor) to relate memberships across
 regions without unfolding `regionInclusionEmbedding` themselves. -/
 public lemma regionInclusionEmbedding_coe {S T : RegionCat X} (h : S.carrier ⊆ T.carrier)
     (i : ↥S.carrier) : (regionInclusionEmbedding h i : X) = (i : X) := rfl

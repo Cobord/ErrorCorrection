@@ -1,6 +1,6 @@
 # QuantumErrorCorrection
 
-Lean 4 / Mathlib formalization of the generalized Pauli group, the Clifford group, and
+Lean 4 / Mathlib formalization of the generalized Pauli group, the Clifford automorphism group, and
 quasi-local algebras built from them on a finite (or arbitrary) set of qudits, together with
 stoquastic Hamiltonians on regions of those qudits.
 
@@ -25,6 +25,11 @@ checked after the fact.
   group on a finite set of qudits of dimension `d`, built directly as the central extension of
   symplectic shift/clock exponent vectors by a `ZMod d` phase (no matrices, no roots of unity),
   together with the symplectic form its commutators realize.
+- [`PauliRepresentation.lean`](PauliRepresentation.lean) — `WeylSystem.equiv` identifies the
+  abstract Pauli group with its concrete subgroup of `U(d^|Qudits|)`, for any chosen clock/shift
+  powers satisfying the Weyl relation and any primitive phase character (`d ≠ 0`). Includes
+  computational-basis matrices, constructors from arbitrary complex primitive roots, and
+  compatibility with cyclotomic reparameterization and entrywise Galois action.
 - [`PauliFunctor.lean`](PauliFunctor.lean) — `PauliGroup.quditInclusionFunctor : RegionCat X ⥤
   GrpInclCat`, sending a region to its Pauli group and a region inclusion to "extend by the
   identity on the new qudits"; `commute_of_disjoint_range` shows Pauli operators on disjoint
@@ -41,19 +46,22 @@ checked after the fact.
   the Pauli group net into a concrete `QuasiLocalAlgebra` instance; super-commutation lifts
   `commute_of_disjoint_range` from individual group elements to arbitrary linear combinations by
   bilinearity.
-- [`CliffordGroup.lean`](CliffordGroup.lean) — `PauliGroup.CliffordGroup Qudits d`, the subgroup
-  of `MulAut (PauliGroup Qudits d)` fixing every phase pointwise; conjugation by any Pauli
-  element is always Clifford (`toClifford`).
-- [`PauliCliffordFunctor.lean`](PauliCliffordFunctor.lean) — Proves `PauliGroup` on a union of
+- [`CliffordAutGroup.lean`](CliffordAutGroup.lean) — `PauliGroup.CliffordAutGroup Qudits d`, the subgroup
+  of `MulAut (PauliGroup Qudits d)` fixing every phase pointwise. `toCliffordAut` sends Pauli
+  elements to inner automorphisms and has the pure phases as its kernel. For a primitive Weyl
+  realization with `d > 0`, this abstract group is the unitary normalizer modulo scalar
+  unitaries. The module documents the distinction and the dependence of its quotient by
+  inner automorphisms on the dimension and phase convention.
+- [`PauliCliffordAutFunctor.lean`](PauliCliffordAutFunctor.lean) — Proves `PauliGroup` on a union of
   disjoint regions is a *central product* of the two sub-`PauliGroup`s (`centralProdHom` and its
   surjectivity), uses this to extend a Clifford automorphism of a subregion trivially onto new
-  qudits (`cliffordExtend`, `cliffordInclusionHom`), and assembles
-  `PauliGroup.cliffordInclusionFunctor : RegionCat X ⥤ GrpInclCat` sending a region to its
-  Clifford group. Also proves `commute_of_disjoint_cliffordInclusionHom`, the Clifford analogue
+  qudits (`cliffordAutExtend`, `cliffordAutInclusionHom`), and assembles
+  `PauliGroup.cliffordAutInclusionFunctor : RegionCat X ⥤ GrpInclCat` sending a region to its
+  Clifford automorphism group. Also proves `commute_of_disjoint_cliffordAutInclusionHom`, the Clifford analogue
   of `commute_of_disjoint_range`.
-- [`PauliCliffordQuasiLocalAlgebra.lean`](PauliCliffordQuasiLocalAlgebra.lean) — Assembles the
-  group algebra of the Clifford group net into a concrete `QuasiLocalAlgebra` instance, mirroring
-  `PauliQuasiLocalAlgebra.lean` with `CliffordGroup` in place of `PauliGroup`.
+- [`PauliCliffordAutQuasiLocalAlgebra.lean`](PauliCliffordAutQuasiLocalAlgebra.lean) — Assembles the
+  group algebra of the Clifford automorphism group net into a concrete `QuasiLocalAlgebra` instance, mirroring
+  `PauliQuasiLocalAlgebra.lean` with `CliffordAutGroup` in place of `PauliGroup`.
 - [`PointedConeCat.lean`](PointedConeCat.lean) — `PointedConeCat R`, the category of modules over
   an ordered ring `R` equipped with a distinguished `PointedCone R`, whose morphisms are the
   `R`-linear maps carrying one cone into the other (so a functor into it is a net of cones). The

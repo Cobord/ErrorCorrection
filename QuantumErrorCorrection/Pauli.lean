@@ -37,6 +37,9 @@ This file builds `PauliGroup Qudits d` directly as this cocycle extension (no ma
 roots of unity in `ℂ`: the phase just lives in `ZMod d`), proves it is a group, and relates
 commutators of Pauli elements to the symplectic form on `(Qudits → ZMod d) × (Qudits → ZMod d)`,
 `Ω((a,b),(a',b')) = ⟨a,b'⟩ - ⟨a',b⟩`, which is the key fact stabilizer codes are built from.
+
+See `PauliRepresentation.lean` for faithful unitary realizations parameterized by a primitive
+phase character and a choice of clock/shift system, together with Galois compatibility.
 -/
 
 @[expose] public section

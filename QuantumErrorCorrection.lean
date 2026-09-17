@@ -6,6 +6,7 @@ import QuantumErrorCorrection.PauliCliffordFunctor
 import QuantumErrorCorrection.PauliCliffordQuasiLocalAlgebra
 import QuantumErrorCorrection.PauliFunctor
 import QuantumErrorCorrection.PauliQuasiLocalAlgebra
+import QuantumErrorCorrection.PauliRepresentation
 import QuantumErrorCorrection.PointedConeAlgCat
 import QuantumErrorCorrection.PointedConeCat
 import QuantumErrorCorrection.QuasiLocalAlgebra
