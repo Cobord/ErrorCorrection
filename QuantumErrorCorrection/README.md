@@ -26,10 +26,11 @@ checked after the fact.
   symplectic shift/clock exponent vectors by a `ZMod d` phase (no matrices, no roots of unity),
   together with the symplectic form its commutators realize.
 - [`PauliRepresentation.lean`](PauliRepresentation.lean) — `WeylSystem.equiv` identifies the
-  abstract Pauli group with its concrete subgroup of `U(d^|Qudits|)`, for any chosen clock/shift
-  powers satisfying the Weyl relation and any primitive phase character (`d ≠ 0`). Includes
-  computational-basis matrices, constructors from arbitrary complex primitive roots, and
-  compatibility with cyclotomic reparameterization and entrywise Galois action.
+  abstract Pauli group with its concrete subgroup of unitary matrices over any coefficient
+  field `k` with `[StarRing k]`, for chosen clock/shift powers satisfying the Weyl relation
+  and a primitive unitary phase character (`d ≠ 0`). Includes computational-basis matrices,
+  a constructor from a primitive root satisfying `star ω = ω⁻¹`, and compatibility with
+  field embeddings, cyclotomic reparameterization, and Galois automorphisms.
 - [`PauliFunctor.lean`](PauliFunctor.lean) — `PauliGroup.quditInclusionFunctor : RegionCat X ⥤
   GrpInclCat`, sending a region to its Pauli group and a region inclusion to "extend by the
   identity on the new qudits"; `commute_of_disjoint_range` shows Pauli operators on disjoint

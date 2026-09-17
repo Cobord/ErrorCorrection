@@ -7,14 +7,17 @@ module
 
 public import QuantumErrorCorrection.Pauli
 public import Mathlib.LinearAlgebra.UnitaryGroup
-public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
 public import Mathlib.Algebra.Group.Subgroup.Ker
 
 /-!
 # Unitary realizations of the Pauli group
 
-The phase character is a parameter: no distinguished primitive root is chosen.
+The coefficient field `k` has an involution (`[Field k] [StarRing k]`). The phase character
+is a parameter with values in `unitary k`: no distinguished primitive root is chosen.
+A field-valued primitive root can be used when `star ω = ω⁻¹`. No analytic or algebraic
+closure assumptions are required; the construction applies to algebraic and cyclotomic
+fields equipped with an appropriate involution.
 The computational basis is indexed by `Qudits → ZMod d`, hence has dimension
 `d ^ Fintype.card Qudits`. Our convention is
 `ρ(c,a,b)|j⟩ = χ(c + ⟨j,b⟩)|j+a⟩`.
@@ -24,18 +27,20 @@ The computational basis is indexed by `Qudits → ZMod d`, hence has dimension
 
 namespace PauliGroup
 
-/-- A choice of primitive phase, expressed without choosing a preferred complex root. -/
-structure PhaseCharacter (d : ℕ) where
-  hom : Multiplicative (ZMod d) →* unitary ℂ
+/-- A faithful phase character with values in the unitary elements of the coefficient field. -/
+structure PhaseCharacter (k : Type*) [Field k] [StarRing k] (d : ℕ) where
+  hom : Multiplicative (ZMod d) →* unitary k
   injective : Function.Injective hom
+
+variable {k : Type*} [Field k] [StarRing k]
 
 namespace PhaseCharacter
 
 variable {d : ℕ}
 
 /-- Every chosen primitive unitary root supplies a phase character. -/
-noncomputable def ofPrimitiveRoot [NeZero d] (ω : unitary ℂ) (hω : IsPrimitiveRoot ω d) :
-    PhaseCharacter d where
+noncomputable def ofPrimitiveRoot [NeZero d] (ω : unitary k) (hω : IsPrimitiveRoot ω d) :
+    PhaseCharacter k d where
   hom :=
     { toFun := fun c => ω ^ c.toAdd.val
       map_one' := by simp
@@ -49,71 +54,78 @@ noncomputable def ofPrimitiveRoot [NeZero d] (ω : unitary ℂ) (hω : IsPrimiti
     apply ZMod.val_injective
     exact hω.pow_inj (ZMod.val_lt _) (ZMod.val_lt _) h
 
-/-- The complex phase corresponding to an exponent. -/
-noncomputable def value (χ : PhaseCharacter d) (c : ZMod d) : ℂ :=
+/-- The phase in the coefficient field corresponding to an exponent. -/
+noncomputable def value (χ : PhaseCharacter k d) (c : ZMod d) : k :=
   χ.hom (Multiplicative.ofAdd c)
 
-@[simp] lemma value_zero (χ : PhaseCharacter d) : χ.value 0 = 1 := by
+@[simp] lemma value_zero (χ : PhaseCharacter k d) : χ.value 0 = 1 := by
   exact congrArg Subtype.val χ.hom.map_one
 
-@[simp] lemma value_add (χ : PhaseCharacter d) (a b : ZMod d) :
+@[simp] lemma value_add (χ : PhaseCharacter k d) (a b : ZMod d) :
     χ.value (a + b) = χ.value a * χ.value b := by
   exact congrArg Subtype.val (χ.hom.map_mul (Multiplicative.ofAdd a) (Multiplicative.ofAdd b))
 
-lemma value_injective (χ : PhaseCharacter d) : Function.Injective χ.value := by
+lemma value_injective (χ : PhaseCharacter k d) : Function.Injective χ.value := by
   intro a b h
   exact Multiplicative.ofAdd.injective (χ.injective (Subtype.ext h))
 
-lemma value_natCast (χ : PhaseCharacter d) (n : ℕ) :
+lemma value_natCast (χ : PhaseCharacter k d) (n : ℕ) :
     χ.value (n : ZMod d) = χ.value 1 ^ n := by
   induction n with
   | zero => simp
   | succ n hn => simp [Nat.cast_add, hn, pow_succ]
 
-lemma value_eq_pow [NeZero d] (χ : PhaseCharacter d) (c : ZMod d) :
+lemma value_eq_pow [NeZero d] (χ : PhaseCharacter k d) (c : ZMod d) :
     χ.value c = χ.value 1 ^ c.val := by
   simpa using χ.value_natCast c.val
 
-/-- Any complex primitive root is automatically unitary, so it can be used directly. -/
-noncomputable def ofComplexPrimitiveRoot [NeZero d] (ω : ℂ) (hω : IsPrimitiveRoot ω d) :
-    PhaseCharacter d := by
-  have hu : ω ∈ unitary ℂ := by
+/-- A primitive root in the coefficient field supplies a phase character when the involution
+sends it to its inverse. This compatibility is an explicit hypothesis on the chosen root. -/
+noncomputable def ofPrimitiveRootOfStar [NeZero d] (ω : k) (hω : IsPrimitiveRoot ω d)
+    (hstar : star ω = ω⁻¹) : PhaseCharacter k d := by
+  have hu : ω ∈ unitary k := by
     apply Unitary.mem_iff_self_mul_star.mpr
-    change ω * (starRingEnd ℂ) ω = 1
-    rw [Complex.mul_conj', Complex.norm_eq_one_of_pow_eq_one hω.pow_eq_one (NeZero.ne d)]
-    simp
+    rw [hstar, mul_inv_cancel₀ (hω.ne_zero (NeZero.ne d))]
   exact ofPrimitiveRoot ⟨ω, hu⟩
-    ((IsPrimitiveRoot.map_iff_of_injective (f := (unitary ℂ).subtype)
+    ((IsPrimitiveRoot.map_iff_of_injective (f := (unitary k).subtype)
       Subtype.val_injective).mp hω)
 
-@[simp] lemma ofPrimitiveRoot_value [NeZero d] (ω : unitary ℂ)
+@[simp] lemma ofPrimitiveRoot_value [NeZero d] (ω : unitary k)
     (hω : IsPrimitiveRoot ω d) (c : ZMod d) :
-    (ofPrimitiveRoot ω hω).value c = (ω : ℂ) ^ c.val := rfl
+    (ofPrimitiveRoot ω hω).value c = (ω : k) ^ c.val := rfl
 
-@[simp] lemma ofComplexPrimitiveRoot_value [NeZero d] (ω : ℂ)
-    (hω : IsPrimitiveRoot ω d) (c : ZMod d) :
-    (ofComplexPrimitiveRoot ω hω).value c = ω ^ c.val := rfl
+@[simp] lemma ofPrimitiveRootOfStar_value [NeZero d] (ω : k)
+    (hω : IsPrimitiveRoot ω d) (hstar : star ω = ω⁻¹) (c : ZMod d) :
+    (ofPrimitiveRootOfStar ω hω hstar).value c = ω ^ c.val := rfl
 
-lemma value_ne_zero (χ : PhaseCharacter d) (c : ZMod d) : χ.value c ≠ 0 := by
+/-- A field endomorphism preserves unitarity on these roots: its image of a primitive root
+is a power of that root. It need not commute with star elsewhere in the field. -/
+lemma star_map_primitiveRoot [NeZero d] (ω : k) (hω : IsPrimitiveRoot ω d)
+    (hstar : star ω = ω⁻¹) (σ : k →+* k) : star (σ ω) = (σ ω)⁻¹ := by
+  obtain ⟨n, _, hn⟩ := hω.eq_pow_of_pow_eq_one
+    (show (σ ω) ^ d = 1 by rw [← map_pow, hω.pow_eq_one, map_one])
+  rw [← hn, star_pow, hstar, inv_pow]
+
+lemma value_ne_zero (χ : PhaseCharacter k d) (c : ZMod d) : χ.value c ≠ 0 := by
   have h := (χ.hom (Multiplicative.ofAdd c)).property.2
   intro hz
   change χ.value c * star (χ.value c) = 1 at h
   simp [hz] at h
 
-@[simp] lemma value_neg (χ : PhaseCharacter d) (c : ZMod d) :
+@[simp] lemma value_neg (χ : PhaseCharacter k d) (c : ZMod d) :
     χ.value (-c) = star (χ.value c) := by
-  change ((χ.hom ((Multiplicative.ofAdd c)⁻¹) : unitary ℂ) : ℂ) = _
+  change ((χ.hom ((Multiplicative.ofAdd c)⁻¹) : unitary k) : k) = _
   rw [map_inv]
   rfl
 
 section Matrices
 
 variable {Qudits : Type*} [Fintype Qudits] [DecidableEq Qudits]
-variable {d : ℕ} [NeZero d] (χ : PhaseCharacter d)
+variable {d : ℕ} [NeZero d] (χ : PhaseCharacter k d)
 
 /-- Clock, shift, and phase in the computational basis for the chosen phase character. -/
 noncomputable def matrix (g : PauliGroup Qudits d) :
-    Matrix (Qudits → ZMod d) (Qudits → ZMod d) ℂ :=
+    Matrix (Qudits → ZMod d) (Qudits → ZMod d) k :=
   fun i j => if i = j + g.shift then χ.value (g.phase + pairing j g.clock) else 0
 
 omit [DecidableEq Qudits] [NeZero d] in
@@ -160,7 +172,7 @@ lemma matrix_inv (g : PauliGroup Qudits d) :
 
 /-- The unitary representation for the chosen phase character. -/
 noncomputable def unitaryHom :
-    PauliGroup Qudits d →* Matrix.unitaryGroup (Qudits → ZMod d) ℂ where
+    PauliGroup Qudits d →* Matrix.unitaryGroup (Qudits → ZMod d) k where
   toFun g := ⟨χ.matrix g, Matrix.mem_unitaryGroup_iff.mpr (by
     rw [← matrix_inv, ← matrix_mul, mul_inv_cancel, matrix_one])⟩
   map_one' := Subtype.ext χ.matrix_one
@@ -191,7 +203,7 @@ lemma unitaryHom_injective : Function.Injective (χ.unitaryHom (Qudits := Qudits
   exact χ.matrix_injective (congrArg Subtype.val heq)
 
 /-- The concrete subgroup consisting of phase times shift times clock matrices. -/
-noncomputable def concreteSubgroup : Subgroup (Matrix.unitaryGroup (Qudits → ZMod d) ℂ) :=
+noncomputable def concreteSubgroup : Subgroup (Matrix.unitaryGroup (Qudits → ZMod d) k) :=
   χ.unitaryHom.range
 
 /-- The abstract cocycle presentation is isomorphic to its concrete unitary subgroup. -/
@@ -204,24 +216,24 @@ end PhaseCharacter
 
 /-- Scalar phases as unitary matrices. -/
 noncomputable def scalarUnitaryHom (ι : Type*) [Fintype ι] [DecidableEq ι] :
-    unitary ℂ →* Matrix.unitaryGroup ι ℂ where
-  toFun z := ⟨Matrix.scalar ι (z : ℂ), by
+    unitary k →* Matrix.unitaryGroup ι k where
+  toFun z := ⟨Matrix.scalar ι (z : k), by
     apply Matrix.mem_unitaryGroup_iff.mpr
-    have hs : star (Matrix.scalar ι (z : ℂ)) = Matrix.scalar ι (star (z : ℂ)) := by
+    have hs : star (Matrix.scalar ι (z : k)) = Matrix.scalar ι (star (z : k)) := by
       ext i j
       by_cases h : i = j <;>
         simp [Matrix.scalar_apply, Matrix.star_apply, h, eq_comm]
     rw [hs, ← map_mul, z.property.2, map_one]⟩
   map_one' := Subtype.ext (map_one (Matrix.scalar ι))
-  map_mul' z w := Subtype.ext (map_mul (Matrix.scalar ι) (z : ℂ) (w : ℂ))
+  map_mul' z w := Subtype.ext (map_mul (Matrix.scalar ι) (z : k) (w : k))
 
 lemma scalarUnitaryHom_commute {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (z : unitary ℂ) (g : Matrix.unitaryGroup ι ℂ) : Commute (scalarUnitaryHom ι z) g := by
+    (z : unitary k) (g : Matrix.unitaryGroup ι k) : Commute (scalarUnitaryHom ι z) g := by
   apply Subtype.ext
   exact Matrix.scalar_comm _ (fun _ => Commute.all _ _) _
 
 lemma scalarUnitaryHom_injective {ι : Type*} [Fintype ι] [DecidableEq ι] [Nonempty ι] :
-    Function.Injective (scalarUnitaryHom ι) := by
+    Function.Injective (scalarUnitaryHom (k := k) ι) := by
   intro z w h
   exact Subtype.ext (Matrix.scalar_inj.mp (congrArg Subtype.val h))
 
@@ -229,7 +241,7 @@ variable {Qudits : Type*} [Fintype Qudits] [DecidableEq Qudits] {d : ℕ}
 
 namespace PhaseCharacter
 
-variable [NeZero d] (χ : PhaseCharacter d)
+variable [NeZero d] (χ : PhaseCharacter k d)
 
 @[simp] lemma matrix_phaseGen (c : ZMod d) :
     χ.matrix (phaseGen c : PauliGroup Qudits d) =
@@ -269,16 +281,16 @@ namespace PhaseCharacter
 variable [NeZero d]
 
 /-- The chosen phase character acting by scalar matrices. -/
-noncomputable def scalarHom (χ : PhaseCharacter d) :
-    Multiplicative (ZMod d) →* Matrix.unitaryGroup (Qudits → ZMod d) ℂ :=
+noncomputable def scalarHom (χ : PhaseCharacter k d) :
+    Multiplicative (ZMod d) →* Matrix.unitaryGroup (Qudits → ZMod d) k :=
   (scalarUnitaryHom _).comp χ.hom
 
-lemma scalarHom_injective (χ : PhaseCharacter d) :
+lemma scalarHom_injective (χ : PhaseCharacter k d) :
     Function.Injective (χ.scalarHom (Qudits := Qudits)) :=
   scalarUnitaryHom_injective.comp χ.injective
 
-lemma scalarHom_commute (χ : PhaseCharacter d) (c : Multiplicative (ZMod d))
-    (A : Matrix.unitaryGroup (Qudits → ZMod d) ℂ) : Commute (χ.scalarHom c) A :=
+lemma scalarHom_commute (χ : PhaseCharacter k d) (c : Multiplicative (ZMod d))
+    (A : Matrix.unitaryGroup (Qudits → ZMod d) k) : Commute (χ.scalarHom c) A :=
   scalarUnitaryHom_commute _ _
 
 end PhaseCharacter
@@ -287,19 +299,19 @@ end PhaseCharacter
 The homomorphisms encode addition of exponents (including their order dividing `d`).
 No particular matrices or computational basis are prescribed. -/
 structure WeylSystem (Qudits : Type*) [Fintype Qudits] [DecidableEq Qudits]
-    (d : ℕ) [NeZero d] (χ : PhaseCharacter d) where
-  shift : Multiplicative (Qudits → ZMod d) →* Matrix.unitaryGroup (Qudits → ZMod d) ℂ
-  clock : Multiplicative (Qudits → ZMod d) →* Matrix.unitaryGroup (Qudits → ZMod d) ℂ
+    (d : ℕ) [NeZero d] (χ : PhaseCharacter k d) where
+  shift : Multiplicative (Qudits → ZMod d) →* Matrix.unitaryGroup (Qudits → ZMod d) k
+  clock : Multiplicative (Qudits → ZMod d) →* Matrix.unitaryGroup (Qudits → ZMod d) k
   weyl (a b : Multiplicative (Qudits → ZMod d)) :
     clock b * shift a = χ.scalarHom (Multiplicative.ofAdd (pairing a.toAdd b.toAdd)) *
       shift a * clock b
 
 namespace WeylSystem
 
-variable [NeZero d] {χ : PhaseCharacter d} (W : WeylSystem Qudits d χ)
+variable [NeZero d] {χ : PhaseCharacter k d} (W : WeylSystem Qudits d χ)
 
 /-- Extract a clock/shift system from any representation with the prescribed scalar phases. -/
-noncomputable def ofHom (f : PauliGroup Qudits d →* Matrix.unitaryGroup (Qudits → ZMod d) ℂ)
+noncomputable def ofHom (f : PauliGroup Qudits d →* Matrix.unitaryGroup (Qudits → ZMod d) k)
     (hphase : ∀ c, f (phaseGen c) = χ.scalarHom (Multiplicative.ofAdd c)) :
     WeylSystem Qudits d χ where
   shift := f.comp
@@ -319,7 +331,7 @@ noncomputable def ofHom (f : PauliGroup Qudits d →* Matrix.unitaryGroup (Qudit
     ext <;> simp [phaseGen]
 
 /-- Realize an abstract element using the chosen phase, shift powers, and clock powers. -/
-noncomputable def hom : PauliGroup Qudits d →* Matrix.unitaryGroup (Qudits → ZMod d) ℂ where
+noncomputable def hom : PauliGroup Qudits d →* Matrix.unitaryGroup (Qudits → ZMod d) k where
   toFun g := χ.scalarHom (Multiplicative.ofAdd g.phase) *
     W.shift (Multiplicative.ofAdd g.shift) * W.clock (Multiplicative.ofAdd g.clock)
   map_one' := by change χ.scalarHom 1 * W.shift 1 * W.clock 1 = 1; simp
@@ -358,7 +370,7 @@ noncomputable def hom : PauliGroup Qudits d →* Matrix.unitaryGroup (Qudits →
   simp
 
 @[simp] lemma ofHom_hom
-    (f : PauliGroup Qudits d →* Matrix.unitaryGroup (Qudits → ZMod d) ℂ)
+    (f : PauliGroup Qudits d →* Matrix.unitaryGroup (Qudits → ZMod d) k)
     (hphase : ∀ c, f (phaseGen c) = χ.scalarHom (Multiplicative.ofAdd c)) :
     (ofHom f hphase).hom = f := by
   apply MonoidHom.ext
@@ -377,9 +389,9 @@ lemma hom_injective : Function.Injective W.hom :=
     exact Multiplicative.ofAdd.injective (χ.scalarHom_injective h))
 
 /-- The concrete subgroup for the chosen clock and shift powers. -/
-noncomputable def subgroup : Subgroup (Matrix.unitaryGroup (Qudits → ZMod d) ℂ) := W.hom.range
+noncomputable def subgroup : Subgroup (Matrix.unitaryGroup (Qudits → ZMod d) k) := W.hom.range
 
-lemma mem_subgroup_iff (A : Matrix.unitaryGroup (Qudits → ZMod d) ℂ) :
+lemma mem_subgroup_iff (A : Matrix.unitaryGroup (Qudits → ZMod d) k) :
     A ∈ W.subgroup ↔ ∃ (c : ZMod d) (a b : Qudits → ZMod d),
       χ.scalarHom (Multiplicative.ofAdd c) * W.shift (Multiplicative.ofAdd a) *
         W.clock (Multiplicative.ofAdd b) = A := by
@@ -397,7 +409,7 @@ end WeylSystem
 
 namespace PhaseCharacter
 
-variable [NeZero d] (χ : PhaseCharacter d)
+variable [NeZero d] (χ : PhaseCharacter k d)
 
 /-- The computational-basis clock and shift system for any chosen primitive phase. -/
 noncomputable def weylSystem : WeylSystem Qudits d χ :=
@@ -440,7 +452,7 @@ def galoisAction : (ZMod d)ˣ →* MulAut (PauliGroup Qudits d) where
 namespace PhaseCharacter
 
 /-- Changing the primitive phase by a unit exponent. -/
-def twist (χ : PhaseCharacter d) (u : (ZMod d)ˣ) : PhaseCharacter d where
+def twist (χ : PhaseCharacter k d) (u : (ZMod d)ˣ) : PhaseCharacter k d where
   hom := χ.hom.comp
     { toFun := fun c => Multiplicative.ofAdd (u * c.toAdd)
       map_one' := by simp
@@ -451,12 +463,12 @@ def twist (χ : PhaseCharacter d) (u : (ZMod d)ˣ) : PhaseCharacter d where
     apply Multiplicative.toAdd.injective
     exact (Units.mul_right_inj u).mp hh
 
-@[simp] lemma twist_value (χ : PhaseCharacter d) (u : (ZMod d)ˣ) (c : ZMod d) :
+@[simp] lemma twist_value (χ : PhaseCharacter k d) (u : (ZMod d)ˣ) (c : ZMod d) :
     (χ.twist u).value c = χ.value (u * c) := rfl
 
 omit [DecidableEq Qudits] in
 /-- Compatibility of the concrete realization with cyclotomic reparameterization. -/
-lemma matrix_twist (χ : PhaseCharacter d) (u : (ZMod d)ˣ) (g : PauliGroup Qudits d) :
+lemma matrix_twist (χ : PhaseCharacter k d) (u : (ZMod d)ˣ) (g : PauliGroup Qudits d) :
     (χ.twist u).matrix g = χ.matrix (galoisEquiv u g) := by
   ext i j
   simp only [matrix, twist_value, galoisEquiv, MulEquiv.coe_mk]
@@ -469,10 +481,12 @@ lemma matrix_twist (χ : PhaseCharacter d) (u : (ZMod d)ˣ) (g : PauliGroup Qudi
   change ↑u * (j q * g.clock q) = j q * (↑u * g.clock q)
   ring
 
+variable {K : Type*} [Field K] [StarRing K]
+
 omit [DecidableEq Qudits] in
-/-- Entrywise Galois compatibility. This only needs the action on the chosen phase
-character; no claim is made that an arbitrary field automorphism preserves all of U. -/
-lemma matrix_map (χ ψ : PhaseCharacter d) (σ : ℂ ≃+* ℂ)
+/-- Entrywise compatibility with coefficient-field maps, assuming compatibility of the chosen
+phase characters. The field map need not preserve star on all coefficients. -/
+lemma matrix_map (χ : PhaseCharacter k d) (ψ : PhaseCharacter K d) (σ : k →+* K)
     (hσ : ∀ c, σ (χ.value c) = ψ.value c) (g : PauliGroup Qudits d) :
     (χ.matrix g).map σ = ψ.matrix g := by
   ext i j
@@ -481,26 +495,40 @@ lemma matrix_map (χ ψ : PhaseCharacter d) (σ : ℂ ≃+* ℂ)
 
 omit [DecidableEq Qudits] in
 /-- It suffices to specify the Galois action on the primitive phase itself. -/
-lemma matrix_map_of_root [NeZero d] (χ ψ : PhaseCharacter d) (σ : ℂ ≃+* ℂ)
+lemma matrix_map_of_root [NeZero d] (χ : PhaseCharacter k d)
+    (ψ : PhaseCharacter K d) (σ : k →+* K)
     (hσ : σ (χ.value 1) = ψ.value 1) (g : PauliGroup Qudits d) :
     (χ.matrix g).map σ = ψ.matrix g :=
   matrix_map χ ψ σ (fun c => by rw [χ.value_eq_pow, ψ.value_eq_pow, map_pow, hσ]) g
 
 omit [DecidableEq Qudits] in
-/-- Field automorphisms transport the realization to the conjugate primitive root. -/
-lemma matrix_map_primitiveRoot [NeZero d] (ω : ℂ) (hω : IsPrimitiveRoot ω d)
-    (σ : ℂ ≃+* ℂ) (g : PauliGroup Qudits d) :
-    ((ofComplexPrimitiveRoot ω hω).matrix g).map σ =
-      (ofComplexPrimitiveRoot (σ ω) (hω.map_of_injective σ.injective)).matrix g := by
+/-- A field map transports the realization to the image primitive root, provided the
+involution in each field inverts its chosen root. No preservation of star away from those
+roots is needed, so this applies to Galois automorphisms as well as field embeddings. -/
+lemma matrix_map_primitiveRoot [NeZero d] (ω : k) (hω : IsPrimitiveRoot ω d)
+    (hstar : star ω = ω⁻¹) (σ : k →+* K) (hstar' : star (σ ω) = (σ ω)⁻¹)
+    (g : PauliGroup Qudits d) :
+    ((ofPrimitiveRootOfStar ω hω hstar).matrix g).map σ =
+      (ofPrimitiveRootOfStar (σ ω) (hω.map_of_injective σ.injective) hstar').matrix g := by
   apply matrix_map
   intro c
   simp
+
+omit [DecidableEq Qudits] in
+/-- Galois automorphisms transport the realization without any additional hypothesis about
+their action on star: unitarity of the conjugate primitive root follows automatically. -/
+lemma matrix_galois_primitiveRoot [NeZero d] (ω : k) (hω : IsPrimitiveRoot ω d)
+    (hstar : star ω = ω⁻¹) (σ : k ≃+* k) (g : PauliGroup Qudits d) :
+    ((ofPrimitiveRootOfStar ω hω hstar).matrix g).map σ =
+      (ofPrimitiveRootOfStar (σ ω) (hω.map_of_injective σ.injective)
+        (star_map_primitiveRoot ω hω hstar σ.toRingHom)).matrix g :=
+  matrix_map_primitiveRoot ω hω hstar σ.toRingHom _ g
 
 end PhaseCharacter
 
 namespace WeylSystem
 
-variable [NeZero d] {χ : PhaseCharacter d} (W : WeylSystem Qudits d χ)
+variable [NeZero d] {χ : PhaseCharacter k d} (W : WeylSystem Qudits d χ)
 
 /-- Transport any chosen Weyl system under the cyclotomic change `ω ↦ ω^u`. -/
 noncomputable def twist (u : (ZMod d)ˣ) : WeylSystem Qudits d (χ.twist u) :=
