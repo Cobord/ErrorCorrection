@@ -8,7 +8,12 @@ Lean 4 / Mathlib formalization of Lie `1 | N` superalgebras.
   internal `ZMod 2`-grading decomposing it into even and odd parts) and
   `LieSuperAlgebra` (a bracket satisfying graded antisymmetry and the graded
   Jacobi identity on homogeneous elements), together with `Representation`s
-  of a Lie superalgebra.
+  of a Lie superalgebra. Also defines the Koszul sign `koszulSign i j = (-1)^(ij)` with its
+  algebra:
+  - symmetry (`koszulSign_comm`);
+  - multiplicativity in each parity (`koszulSign_add_left`, `koszulSign_add_right`);
+  - `koszulSign_mul_self` and `star_koszulSign`;
+  - the case split `zmod_two_cases`.
 - [`OneN.lean`](OneN.lean) — Over a ring where `2` is invertible, builds the
   `1 | N`-dimensional Lie superalgebra on `Space := 𝕜 × M` from a symmetric
   bilinear form `B` and a skew-adjoint endomorphism `A` on `M` satisfying the

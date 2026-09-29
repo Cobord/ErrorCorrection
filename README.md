@@ -13,7 +13,8 @@ A Lean 4 / Mathlib project formalizing subjects related to linear error correcti
 - [`QuantumErrorCorrection/`](QuantumErrorCorrection/README.md) — the generalized Pauli and
   Clifford automorphism groups on finite sets of qudits; quasi-local `*`-algebras (nets of local algebras
   over regions, with isotony and disjoint super-commutation) built from their group algebras;
-  and stoquastic Hamiltonians on regions of qudits, forming a net of convex cones in the region
-  matrix algebras.
+  bounded-spread homomorphisms, quantum cellular automata and finite-depth circuits, with
+  stacking of systems as a symmetric monoidal structure; and stoquastic Hamiltonians on regions
+  of qudits, forming a net of convex cones in the region matrix algebras.
 
 See each directory's README for details on its files.

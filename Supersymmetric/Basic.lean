@@ -1,4 +1,5 @@
 import Mathlib.Algebra.DirectSum.Decomposition
+import Mathlib.Algebra.Star.Basic
 import Mathlib.Data.ZMod.Basic
 
 /-!
@@ -48,6 +49,35 @@ def koszulSign (i j : ZMod 2) : 𝕜 := if i = 1 ∧ j = 1 then -1 else 1
 
 @[simp] theorem koszulSign_one_one : koszulSign 𝕜 1 1 = -1 := by
   simp [koszulSign]
+
+theorem zmod_two_cases : ∀ i : ZMod 2, i = 0 ∨ i = 1 := by decide
+
+theorem zmod_two_one_add_one : (1 : ZMod 2) + 1 = 0 := by decide
+
+theorem koszulSign_comm (i j : ZMod 2) : koszulSign 𝕜 i j = koszulSign 𝕜 j i := by
+  simp only [koszulSign, and_comm]
+
+/-- The Koszul sign is multiplicative in its first parity. -/
+theorem koszulSign_add_left (i j k : ZMod 2) :
+    koszulSign 𝕜 (i + j) k = koszulSign 𝕜 i k * koszulSign 𝕜 j k := by
+  rcases zmod_two_cases i with rfl | rfl <;> rcases zmod_two_cases j with rfl | rfl <;>
+    rcases zmod_two_cases k with rfl | rfl <;>
+    simp [koszulSign, zmod_two_one_add_one]
+
+/-- The Koszul sign is multiplicative in its second parity. -/
+theorem koszulSign_add_right (i j k : ZMod 2) :
+    koszulSign 𝕜 i (j + k) = koszulSign 𝕜 i j * koszulSign 𝕜 i k := by
+  rw [koszulSign_comm, koszulSign_add_left, koszulSign_comm 𝕜 j, koszulSign_comm 𝕜 k]
+
+@[simp] theorem koszulSign_mul_self (i j : ZMod 2) :
+    koszulSign 𝕜 i j * koszulSign 𝕜 i j = 1 := by
+  rcases zmod_two_cases i with rfl | rfl <;> rcases zmod_two_cases j with rfl | rfl <;>
+    simp [koszulSign]
+
+@[simp] theorem star_koszulSign [StarRing 𝕜] (i j : ZMod 2) :
+    star (koszulSign 𝕜 i j) = koszulSign 𝕜 i j := by
+  unfold koszulSign
+  split_ifs <;> simp
 
 /-- A Lie superalgebra structure on a super vector space.
 

@@ -1,3 +1,5 @@
+import QuantumErrorCorrection.BoundedSpreadHom
+import QuantumErrorCorrection.BoundedSpreadMonoidal
 import QuantumErrorCorrection.CliffordGroup
 import QuantumErrorCorrection.GroupAlgebraStar
 import QuantumErrorCorrection.GrpInclCat
@@ -9,6 +11,11 @@ import QuantumErrorCorrection.PauliQuasiLocalAlgebra
 import QuantumErrorCorrection.PauliRepresentation
 import QuantumErrorCorrection.PointedConeAlgCat
 import QuantumErrorCorrection.PointedConeCat
+import QuantumErrorCorrection.QCA
 import QuantumErrorCorrection.QuasiLocalAlgebra
 import QuantumErrorCorrection.RegionCat
+import QuantumErrorCorrection.RegionNbhd
+import QuantumErrorCorrection.Stacking
 import QuantumErrorCorrection.Stoquastic
+import QuantumErrorCorrection.SuperStarAlgCatMonoidal
+import QuantumErrorCorrection.SuperStarTensor
