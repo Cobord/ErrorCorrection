@@ -213,6 +213,10 @@ def isoOfNet (e : A.1.net ≅ A'.1.net) : A ≅ A' where
   hom_inv_id := by rw [homOfNet_comp, e.hom_inv_id, homOfNet_id]
   inv_hom_id := by rw [homOfNet_comp, e.inv_hom_id, homOfNet_id]
 
+theorem isoOfNet_hom (e : A.1.net ≅ A'.1.net) : (isoOfNet e).hom = homOfNet e.hom := rfl
+
+theorem isoOfNet_inv (e : A.1.net ≅ A'.1.net) : (isoOfNet e).inv = homOfNet e.inv := rfl
+
 /-! ### The monoidal structure -/
 
 instance monoidalCategoryStruct : MonoidalCategoryStruct (BoundedSpreadCat X 𝕜) where

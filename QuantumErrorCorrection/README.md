@@ -10,6 +10,11 @@ On a metric site set, quasi-local algebras form a symmetric monoidal category
 automorphisms are the quantum cellular automata, which contain the finite-depth circuits as a
 subgroup. QCAs and circuits stack.
 
+QCAs modulo circuits form a commutative monoid under stacking, with no normality of circuits
+assumed. This works over an arbitrary commutative `*`-ring `𝕜` and metric site set `X`. The
+monoid is functorial in the coefficients: base change along star ring maps that are flat defines
+a functor from `FlatCommStarRingCat` to commutative monoids.
+
 Both halves are region-indexed *nets*: functors out of `RegionCat X`, the poset of finite
 regions of the site set `X`, sending each region to the algebra (resp. cone) of observables
 supported there and each inclusion of regions to "act trivially on the new qudits". The target
@@ -30,6 +35,11 @@ checked after the fact.
   endofunctor `metricNbhdFunctor l : RegionCat X ⥤ RegionCat X`, together with the natural
   transformations `𝟭 ⟶ N_l`, `N_l ⟶ N_l'` (`l ≤ l'`) and `N_l ⋙ N_l' ⟶ N_(l+l')` (triangle
   inequality).
+- [`FlatCommStarRingCat.lean`](FlatCommStarRingCat.lean) — `FlatCommStarRingCat`, the category of
+  commutative `*`-rings whose morphisms are ring homomorphisms commuting with `star` and making
+  the target flat over the source (`RingHom.Flat`). These are the coefficient changes along
+  which extending scalars keeps a net of local `*`-algebras isotonic. Identities and
+  composites stay flat (`RingHom.Flat.id`, `RingHom.Flat.comp`).
 - [`GrpInclCat.lean`](GrpInclCat.lean) — `GrpInclCat`, the category of groups whose morphisms are
   only the *injective* homomorphisms, so that any functor into it is automatically an isotonic
   net of groups.
@@ -108,6 +118,38 @@ checked after the fact.
   - Stacking: `QCA.stackMonoidHom : QCA A × QCA B →* QCA (A ⊗ B)` has spread
     `max l l'` for inputs of spreads `l`, `l'`, and maps circuits to circuits
     (`stack_mem_circuitSubgroup`).
+- [`QCAClass.lean`](QCAClass.lean) — QCAs modulo circuits, with `𝕜` an arbitrary commutative
+  `*`-ring and `X` any metric space with finite balls. No normality of circuits is assumed.
+  - `QCAClass A = QCA A ⧸ circuitSubgroup A`, with stacking on classes.
+  - `QCA.transport` moves QCAs along net isomorphisms, mapping layers to layers with the same
+    blocks and hence circuits to circuits.
+  - `QCAStackClass X 𝕜` consists of pairs (system, QCA) identified along net isomorphisms
+    modulo circuits. It is a commutative monoid under stacking, with associativity, unit and
+    commutativity coming from the associator, unitors and braiding.
+- [`SuperStarBaseChange.lean`](SuperStarBaseChange.lean) — Base change of super `*`-algebras
+  along an `R`-algebra `S` whose star is compatible with the scalars.
+  - `S ⊗[R] A` is a super `*`-algebra over `S`, graded by `(A_i).baseChange S`.
+  - Grading-preserving `*`-homomorphisms base change (`baseChangeHom`). Injectivity is preserved
+    when `S` is flat over `R`.
+  - Base change commutes with the super tensor product (`stackBaseChange`) and sends the unit to
+    the unit (`unitBaseChange`).
+  - Base change along the identity is trivial (`lidBaseChange : R ⊗[R] A ≃ A`), and along a
+    composite it is iterated base change
+    (`cancelBaseChangeStar : T ⊗[S] (S ⊗[R] A) ≃ T ⊗[R] A`).
+  - Along a morphism of `FlatCommStarRingCat` this gives a functor
+    `SuperStarAlgCat R ⥤ SuperStarAlgCat S`, and a base change of quasi-local algebras
+    (`QuasiLocalAlgebra.baseChange`). Isotony is preserved by flatness and microcausality by
+    compatibility of Koszul signs.
+- [`QCABaseChange.lean`](QCABaseChange.lean) — Base change along a morphism `σ : R ⟶ S` of
+  `FlatCommStarRingCat`.
+  - Bounded-spread homomorphisms base change keeping their spread, giving a functor
+    `BoundedSpreadCat X R ⥤ BoundedSpreadCat X S`.
+  - QCAs go to QCAs, and layers to layers with the same blocks, so circuits go to circuits.
+  - Base change descends to QCAs modulo circuits, on each system and across systems. It
+    commutes with stacking, giving a homomorphism of commutative monoids
+    `QCAStackClass.baseChangeHom σ : QCAStackClass X R →* QCAStackClass X S`.
+  - This is functorial in the coefficients:
+    `QCAStackClass.baseChangeFunctor X : FlatCommStarRingCat ⥤ CommMonCat`.
 - [`PauliQuasiLocalAlgebra.lean`](PauliQuasiLocalAlgebra.lean) — Assembles the group algebra of
   the Pauli group net into a concrete `QuasiLocalAlgebra` instance; super-commutation lifts
   `commute_of_disjoint_range` from individual group elements to arbitrary linear combinations by

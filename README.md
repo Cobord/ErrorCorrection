@@ -14,7 +14,9 @@ A Lean 4 / Mathlib project formalizing subjects related to linear error correcti
   Clifford automorphism groups on finite sets of qudits; quasi-local `*`-algebras (nets of local algebras
   over regions, with isotony and disjoint super-commutation) built from their group algebras;
   bounded-spread homomorphisms, quantum cellular automata and finite-depth circuits, with
-  stacking of systems as a symmetric monoidal structure; and stoquastic Hamiltonians on regions
-  of qudits, forming a net of convex cones in the region matrix algebras.
+  stacking of systems as a symmetric monoidal structure; the commutative monoid of QCAs
+  modulo circuits, functorial under flat base change of the coefficients; and stoquastic
+  Hamiltonians on regions of qudits, forming a net of convex cones in the region matrix
+  algebras.
 
 See each directory's README for details on its files.

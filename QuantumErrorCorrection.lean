@@ -1,6 +1,7 @@
 import QuantumErrorCorrection.BoundedSpreadHom
 import QuantumErrorCorrection.BoundedSpreadMonoidal
 import QuantumErrorCorrection.CliffordGroup
+import QuantumErrorCorrection.FlatCommStarRingCat
 import QuantumErrorCorrection.GroupAlgebraStar
 import QuantumErrorCorrection.GrpInclCat
 import QuantumErrorCorrection.Pauli
@@ -12,10 +13,13 @@ import QuantumErrorCorrection.PauliRepresentation
 import QuantumErrorCorrection.PointedConeAlgCat
 import QuantumErrorCorrection.PointedConeCat
 import QuantumErrorCorrection.QCA
+import QuantumErrorCorrection.QCABaseChange
+import QuantumErrorCorrection.QCAClass
 import QuantumErrorCorrection.QuasiLocalAlgebra
 import QuantumErrorCorrection.RegionCat
 import QuantumErrorCorrection.RegionNbhd
 import QuantumErrorCorrection.Stacking
 import QuantumErrorCorrection.Stoquastic
 import QuantumErrorCorrection.SuperStarAlgCatMonoidal
+import QuantumErrorCorrection.SuperStarBaseChange
 import QuantumErrorCorrection.SuperStarTensor
