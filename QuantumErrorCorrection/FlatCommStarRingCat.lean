@@ -5,8 +5,12 @@ Authors: Ammar Husain
 -/
 module
 
+public import Mathlib.Algebra.Category.CommAlgCat.Monoidal
 public import Mathlib.Algebra.Star.Basic
+public import Mathlib.Algebra.Star.TensorProduct
 public import Mathlib.CategoryTheory.Category.Basic
+public import Mathlib.CategoryTheory.Monoidal.Braided.Basic
+public import Mathlib.CategoryTheory.Monoidal.Transport
 public import Mathlib.RingTheory.RingHom.Flat
 
 /-!
@@ -92,5 +96,150 @@ theorem hom_star {R S : FlatCommStarRingCat.{u}} (f : R ⟶ S) (r : R) :
 
 theorem hom_flat {R S : FlatCommStarRingCat.{u}} (f : R ⟶ S) : f.hom.Flat :=
   f.flat
+
+/-! ### The symmetric monoidal structure: tensor product over `ℤ` -/
+
+noncomputable section Monoidal
+
+open MonoidalCategory TensorProduct
+
+section StarLemmas
+
+variable {A B C A' B' : Type*} [CommRing A] [StarRing A] [CommRing B] [StarRing B] [CommRing C]
+  [StarRing C] [CommRing A'] [StarRing A'] [CommRing B'] [StarRing B']
+
+/-- Star ring maps tensor to a star ring map. -/
+theorem tensorMap_star (σ : A →+* A') (τ : B →+* B') (hσ : ∀ a, σ (star a) = star (σ a))
+    (hτ : ∀ b, τ (star b) = star (τ b)) (x : A ⊗[ℤ] B) :
+    Algebra.TensorProduct.map σ.toIntAlgHom τ.toIntAlgHom (star x) =
+      star (Algebra.TensorProduct.map σ.toIntAlgHom τ.toIntAlgHom x) := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | tmul a b =>
+    show σ (star a) ⊗ₜ[ℤ] τ (star b) = star (σ a) ⊗ₜ[ℤ] star (τ b)
+    rw [hσ, hτ]
+  | add x y hx hy => rw [star_add, map_add, hx, hy, map_add, star_add]
+
+theorem tensorAssoc_star : ∀ x, Algebra.TensorProduct.assoc ℤ ℤ ℤ A B C (star x) =
+      star (Algebra.TensorProduct.assoc ℤ ℤ ℤ A B C x) := by
+  intro x
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | tmul y c =>
+    induction y using TensorProduct.induction_on with
+    | zero => simp
+    | tmul a b => rfl
+    | add y y' hy hy' =>
+      rw [TensorProduct.add_tmul, star_add, map_add, hy, hy', map_add, star_add]
+  | add x y hx hy => rw [star_add, map_add, hx, hy, map_add, star_add]
+
+theorem tensorLid_star (x : ℤ ⊗[ℤ] A) :
+    Algebra.TensorProduct.lid ℤ A (star x) = star (Algebra.TensorProduct.lid ℤ A x) := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | tmul n a => rw [TensorProduct.star_tmul, Algebra.TensorProduct.lid_tmul,
+      Algebra.TensorProduct.lid_tmul, star_trivial, star_zsmul]
+  | add x y hx hy => rw [star_add, map_add, hx, hy, map_add, star_add]
+
+theorem tensorRid_star (x : A ⊗[ℤ] ℤ) :
+    Algebra.TensorProduct.rid ℤ ℤ A (star x) = star (Algebra.TensorProduct.rid ℤ ℤ A x) := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | tmul a n => rw [TensorProduct.star_tmul, Algebra.TensorProduct.rid_tmul,
+      Algebra.TensorProduct.rid_tmul, star_trivial, star_zsmul]
+  | add x y hx hy => rw [star_add, map_add, hx, hy, map_add, star_add]
+
+theorem tensorComm_star (x : A ⊗[ℤ] B) :
+    Algebra.TensorProduct.comm ℤ A B (star x) = star (Algebra.TensorProduct.comm ℤ A B x) := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | tmul a b => rfl
+  | add x y hx hy => rw [star_add, map_add, hx, hy, map_add, star_add]
+
+end StarLemmas
+
+/-- A star-compatible ring isomorphism is an isomorphism of `FlatCommStarRingCat`: bijective ring
+maps are flat. -/
+def isoOfStarRingEquiv {R S : FlatCommStarRingCat.{u}} (e : R ≃+* S)
+    (he : ∀ r : R, e (star r) = star (e r)) : R ≅ S where
+  hom := ⟨e.toRingHom, he, RingHom.Flat.of_bijective e.bijective⟩
+  inv := ⟨e.symm.toRingHom, fun s => by
+      rw [RingEquiv.toRingHom_eq_coe, RingEquiv.coe_toRingHom, e.symm_apply_eq, he,
+        RingEquiv.apply_symm_apply],
+    RingHom.Flat.of_bijective e.symm.bijective⟩
+  hom_inv_id := hom_ext (RingHom.ext e.symm_apply_apply)
+  inv_hom_id := hom_ext (RingHom.ext e.apply_symm_apply)
+
+variable {R R' S S' T : FlatCommStarRingCat.{0}}
+
+/-- The forgetful functor to commutative `ℤ`-algebras. -/
+def forgetToCommAlgCat : FlatCommStarRingCat.{0} ⥤ CommAlgCat.{0} ℤ where
+  obj R := CommAlgCat.of ℤ R
+  map σ := CommAlgCat.ofHom σ.hom.toIntAlgHom
+
+instance : forgetToCommAlgCat.Faithful where
+  map_injective h := hom_ext (RingHom.ext fun x => congrArg (fun φ => φ.hom x) h)
+
+/-- The tensor product of two morphisms. -/
+def tensorHomZ (σ : R ⟶ R') (τ : S ⟶ S') :
+    of (R ⊗[ℤ] S) ⟶ of (R' ⊗[ℤ] S') :=
+  ⟨(Algebra.TensorProduct.map σ.hom.toIntAlgHom τ.hom.toIntAlgHom).toRingHom,
+    tensorMap_star σ.hom τ.hom σ.map_star τ.map_star, RingHom.Flat.tensorProductMap σ.flat τ.flat⟩
+
+instance monoidalCategoryStruct : MonoidalCategoryStruct FlatCommStarRingCat.{0} where
+  tensorObj R S := of (R ⊗[ℤ] S)
+  whiskerLeft R _ _ τ := tensorHomZ (𝟙 R) τ
+  whiskerRight σ S := tensorHomZ σ (𝟙 S)
+  tensorHom := tensorHomZ
+  tensorUnit := of ℤ
+  associator R S T :=
+    isoOfStarRingEquiv (Algebra.TensorProduct.assoc ℤ ℤ ℤ R S T).toRingEquiv tensorAssoc_star
+  leftUnitor R := isoOfStarRingEquiv (Algebra.TensorProduct.lid ℤ R).toRingEquiv tensorLid_star
+  rightUnitor R :=
+    isoOfStarRingEquiv (Algebra.TensorProduct.rid ℤ ℤ R).toRingEquiv tensorRid_star
+
+/-- The forgetful functor preserves all the monoidal data on the nose. -/
+def inducingData : Monoidal.InducingFunctorData forgetToCommAlgCat where
+  μIso _ _ := Iso.refl _
+  whiskerLeft_eq _ _ _ _ := CommAlgCat.hom_ext (AlgHom.toLinearMap_injective
+    (TensorProduct.ext' fun _ _ => rfl))
+  whiskerRight_eq _ _ := CommAlgCat.hom_ext (AlgHom.toLinearMap_injective
+    (TensorProduct.ext' fun _ _ => rfl))
+  tensorHom_eq _ _ := CommAlgCat.hom_ext (AlgHom.toLinearMap_injective
+    (TensorProduct.ext' fun _ _ => rfl))
+  εIso := Iso.refl _
+  associator_eq _ _ _ := CommAlgCat.hom_ext (AlgHom.toLinearMap_injective
+    (TensorProduct.ext_threefold fun _ _ _ => rfl))
+  leftUnitor_eq _ := CommAlgCat.hom_ext (AlgHom.toLinearMap_injective
+    (TensorProduct.ext' fun _ _ => rfl))
+  rightUnitor_eq _ := CommAlgCat.hom_ext (AlgHom.toLinearMap_injective
+    (TensorProduct.ext' fun _ _ => rfl))
+
+/-- Commutative `*`-rings with flat star ring maps form a monoidal category under `⊗[ℤ]`. -/
+instance monoidalCategory : MonoidalCategory FlatCommStarRingCat.{0} :=
+  Monoidal.induced forgetToCommAlgCat inducingData
+
+/-- The forgetful functor to `CommAlgCat ℤ` is monoidal. -/
+instance forgetToCommAlgCatMonoidal : forgetToCommAlgCat.Monoidal :=
+  (Monoidal.fromInducedCoreMonoidal forgetToCommAlgCat inducingData).toMonoidal
+
+/-- The swap of tensor factors. -/
+def braidingZ (R S : FlatCommStarRingCat.{0}) : R ⊗ S ≅ S ⊗ R :=
+  isoOfStarRingEquiv (Algebra.TensorProduct.comm ℤ R S).toRingEquiv tensorComm_star
+
+/-- The monoidal structure is braided by swapping tensor factors. -/
+instance braidedCategory : BraidedCategory FlatCommStarRingCat.{0} :=
+  .ofFaithful forgetToCommAlgCat braidingZ fun _ _ =>
+    CommAlgCat.hom_ext (AlgHom.toLinearMap_injective (TensorProduct.ext' fun _ _ => rfl))
+
+/-- The braiding is symmetric. -/
+instance symmetricCategory : SymmetricCategory FlatCommStarRingCat.{0} where
+  symmetry R S := hom_ext (RingHom.ext fun x => by
+    induction x using TensorProduct.induction_on with
+    | zero => rfl
+    | tmul a b => rfl
+    | add x y hx hy => exact (map_add _ x y).trans ((congrArg₂ (· + ·) hx hy)))
+
+end Monoidal
 
 end FlatCommStarRingCat

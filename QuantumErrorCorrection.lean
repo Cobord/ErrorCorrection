@@ -1,8 +1,10 @@
 import QuantumErrorCorrection.BoundedSpreadHom
 import QuantumErrorCorrection.BoundedSpreadMonoidal
 import QuantumErrorCorrection.CliffordGroup
+import QuantumErrorCorrection.CommGrpInclCat
 import QuantumErrorCorrection.FlatCommStarRingCat
 import QuantumErrorCorrection.GroupAlgebraStar
+import QuantumErrorCorrection.GroupRingFunctor
 import QuantumErrorCorrection.GrpInclCat
 import QuantumErrorCorrection.Pauli
 import QuantumErrorCorrection.PauliCliffordFunctor

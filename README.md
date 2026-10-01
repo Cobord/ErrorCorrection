@@ -15,7 +15,8 @@ A Lean 4 / Mathlib project formalizing subjects related to linear error correcti
   over regions, with isotony and disjoint super-commutation) built from their group algebras;
   bounded-spread homomorphisms, quantum cellular automata and finite-depth circuits, with
   stacking of systems as a symmetric monoidal structure; the commutative monoid of QCAs
-  modulo circuits, functorial under flat base change of the coefficients; and stoquastic
+  modulo circuits, functorial under flat base change of the coefficients (with integral group
+  rings of abelian groups as a symmetric monoidal source of such coefficients); and stoquastic
   Hamiltonians on regions of qudits, forming a net of convex cones in the region matrix
   algebras.
 

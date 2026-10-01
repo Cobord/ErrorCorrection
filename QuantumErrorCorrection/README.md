@@ -39,10 +39,23 @@ checked after the fact.
   commutative `*`-rings whose morphisms are ring homomorphisms commuting with `star` and making
   the target flat over the source (`RingHom.Flat`). These are the coefficient changes along
   which extending scalars keeps a net of local `*`-algebras isotonic. Identities and
-  composites stay flat (`RingHom.Flat.id`, `RingHom.Flat.comp`).
+  composites stay flat (`RingHom.Flat.id`, `RingHom.Flat.comp`). It is symmetric monoidal under
+  `⊗[ℤ]` with unit `ℤ`: tensor products of flat maps are flat (`RingHom.Flat.tensorProductMap`),
+  and the structure is induced from `CommAlgCat ℤ` through the faithful forgetful functor.
 - [`GrpInclCat.lean`](GrpInclCat.lean) — `GrpInclCat`, the category of groups whose morphisms are
   only the *injective* homomorphisms, so that any functor into it is automatically an isotonic
   net of groups.
+- [`CommGrpInclCat.lean`](CommGrpInclCat.lean) — `CommGrpInclCat`, its commutative analogue,
+  symmetric monoidal under products of groups (products of injective maps are injective).
+- [`GroupRingFunctor.lean`](GroupRingFunctor.lean) — The integral group ring
+  `CommGrpInclCat.groupRingFunctor : CommGrpInclCat ⥤ FlatCommStarRingCat`, `G ↦ ℤ[G]` with
+  `star g = g⁻¹`, as a symmetric monoidal functor.
+  - Flatness: for injective `f : G → H`, `ℤ[H]` is a free `ℤ[G]`-module with one basis element
+    per coset of `f(G)` (`GroupRing.free_of_injective`).
+  - Monoidal: `ℤ[G] ⊗[ℤ] ℤ[H] ≅ ℤ[G × H]` and `ℤ ≅ ℤ[1]`, and the swap of factors of `G × H`
+    goes to the swap of tensor factors.
+  - Actegory: `CommGrpInclCat` acts on `FlatCommStarRingCat` by `G ⊙ₗ R = ℤ[G] ⊗[ℤ] R`
+    (`CommGrpInclCat.groupRingAction`, a `MonoidalLeftAction`).
 - [`Pauli.lean`](Pauli.lean) — `PauliGroup Qudits d`, the generalized (Weyl-Heisenberg) Pauli
   group on a finite set of qudits of dimension `d`, built directly as the central extension of
   symplectic shift/clock exponent vectors by a `ZMod d` phase (no matrices, no roots of unity),
