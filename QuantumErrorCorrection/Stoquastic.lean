@@ -43,8 +43,10 @@ cone `stoquasticCone` of stoquastic matrices in it, and each region inclusion ac
 `A ↦ A ⊗ 1`, which preserves that cone. Over a commutative `R` that map is an algebra
 homomorphism (`extendAlongRegionₐ`) and not merely linear (`extendAlongRegionₗ`): `1 ⊗ 1 = 1`
 and `(A ⊗ 1) (B ⊗ 1) = (A B) ⊗ 1`, the latter because an intermediate configuration contributing
-to the product must agree with both outer ones off `S`. Forgetting that multiplicative structure
-gives the same net valued in plain modules, `stoquasticFunctorₗ`.
+to the product must agree with both outer ones off `S`. It also commutes with the conjugate
+transpose (`extendAlongRegionₛₐ`), which is the transpose since `PointedConeAlgCat R` asks for
+`TrivialStar R`. Forgetting the multiplicative and `*`-structure gives the same net valued in
+plain modules, `stoquasticFunctorₗ`.
 -/
 
 @[expose] public section
@@ -367,6 +369,82 @@ public lemma extendAlongRegion_mul (f : S ⟶ T)
         h fun t ht => (hvx t ht).trans (hxw t ht), mul_zero]
     · rw [extendAlongRegion_apply_of_not_agree f A hvx, zero_mul]
 
+/-- **Isotony**: for `d ≠ 0`, extending along a region inclusion is injective. Every pair of
+configurations of `S` extends, by one fixed configuration of the new qudits, to a pair of
+configurations of `T` agreeing off `S`, at which `A ⊗ 1` reads off the entry of `A`. For `d = 0`
+this fails: the empty region has one configuration and a nonempty one has none. -/
+public lemma extendAlongRegion_injective [NeZero d] (f : S ⟶ T) :
+    Function.Injective (extendAlongRegion (d := d) (R := R) f) := by
+  intro A B h
+  let w₀ : T.carrier -> Fin d := fun _ => ⟨0, Nat.pos_of_ne_zero (NeZero.ne d)⟩
+  funext y z
+  have hag : ∀ t : T.carrier, (t : X) ∉ S.carrier →
+      configExtend w₀ y t = configExtend w₀ z t := fun t ht => by
+    rw [configExtend_apply_of_not_mem _ _ ht, configExtend_apply_of_not_mem _ _ ht]
+  have hyz := congrFun (congrFun h (configExtend w₀ y)) (configExtend w₀ z)
+  rwa [extendAlongRegion_apply_of_agree f A hag, extendAlongRegion_apply_of_agree f B hag,
+    configRestrict_configExtend, configRestrict_configExtend] at hyz
+
+/-- The product of extensions from two disjoint regions `S, T ⊆ U`, entrywise: it is
+`A (v|_S) (w|_S) * B (v|_T) (w|_T)` when `v` and `w` agree off `S ∪ T`, and `0` otherwise. The
+sum over the intermediate configuration `x` has one surviving term, `x = w` on `S` and `x = v`
+off `S`. -/
+public lemma extendAlongRegion_mul_extendAlongRegion_apply (hST : Disjoint S.carrier T.carrier)
+    (f : S ⟶ U) (g : T ⟶ U) (A : Matrix (S.carrier -> Fin d) (S.carrier -> Fin d) R)
+    (B : Matrix (T.carrier -> Fin d) (T.carrier -> Fin d) R) (v w : U.carrier -> Fin d) :
+    (extendAlongRegion f A * extendAlongRegion g B) v w =
+      if ∀ u : U.carrier, (u : X) ∉ S.carrier → (u : X) ∉ T.carrier → v u = w u then
+        A (configRestrict f v) (configRestrict f w) * B (configRestrict g v) (configRestrict g w)
+      else 0 := by
+  rw [Matrix.mul_apply]
+  let x : U.carrier -> Fin d := fun u => if (u : X) ∈ S.carrier then w u else v u
+  rw [Finset.sum_eq_single x]
+  · have hvx : ∀ u : U.carrier, (u : X) ∉ S.carrier → v u = x u :=
+      fun u hu => by simp [x, hu]
+    have hxS : configRestrict f x = configRestrict f w :=
+      funext fun i => by simp [configRestrict, x, i.2]
+    have hxT : configRestrict g x = configRestrict g v :=
+      funext fun i => by simp [configRestrict, x, Finset.disjoint_right.1 hST i.2]
+    rw [extendAlongRegion_apply_of_agree f A hvx, hxS]
+    split_ifs with hvw
+    · have hxw : ∀ u : U.carrier, (u : X) ∉ T.carrier → x u = w u := fun u hu => by
+        by_cases hS : (u : X) ∈ S.carrier
+        · simp [x, hS]
+        · simp only [x, hS, ite_false]
+          exact hvw u hS hu
+      rw [extendAlongRegion_apply_of_agree g B hxw, hxT]
+    · have hxw : ¬ ∀ u : U.carrier, (u : X) ∉ T.carrier → x u = w u :=
+        fun hxw => hvw fun u hS hT => by simpa [x, hS] using hxw u hT
+      rw [extendAlongRegion_apply_of_not_agree g B hxw, mul_zero]
+  · intro y _ hyx
+    by_cases hvy : ∀ u : U.carrier, (u : X) ∉ S.carrier → v u = y u
+    · have hyw : ¬ ∀ u : U.carrier, (u : X) ∉ T.carrier → y u = w u :=
+        fun hyw => hyx (funext fun u => by
+          by_cases hS : (u : X) ∈ S.carrier
+          · simp only [x, hS, ite_true]
+            exact hyw u (Finset.disjoint_left.1 hST hS)
+          · simp only [x, hS, ite_false]
+            exact (hvy u hS).symm)
+      rw [extendAlongRegion_apply_of_not_agree g B hyw, mul_zero]
+    · rw [extendAlongRegion_apply_of_not_agree f A hvy, zero_mul]
+  · exact fun h => absurd (Finset.mem_univ x) h
+
+/-- **Extending along a region inclusion commutes with the conjugate transpose**:
+`(A ⊗ 1)ᴴ = Aᴴ ⊗ 1`. The condition of agreeing off `S` is symmetric in the two configurations,
+and the identity factor is self-adjoint. -/
+public lemma extendAlongRegion_conjTranspose [StarRing R] (f : S ⟶ T)
+    (A : Matrix (S.carrier -> Fin d) (S.carrier -> Fin d) R) :
+    extendAlongRegion f A.conjTranspose = (extendAlongRegion f A).conjTranspose := by
+  funext v w
+  by_cases h : ∀ t : T.carrier, (t : X) ∉ S.carrier → v t = w t
+  · have h' : ∀ t : T.carrier, (t : X) ∉ S.carrier → w t = v t := fun t ht => (h t ht).symm
+    rw [Matrix.conjTranspose_apply, extendAlongRegion_apply_of_agree f _ h,
+      extendAlongRegion_apply_of_agree f _ h', Matrix.conjTranspose_apply]
+  · have h' : ¬ ∀ t : T.carrier, (t : X) ∉ S.carrier → w t = v t :=
+      fun h' => h fun t ht => (h' t ht).symm
+    rw [Matrix.conjTranspose_apply, extendAlongRegion_apply_of_not_agree f _ h,
+      extendAlongRegion_apply_of_not_agree f _ h', star_zero]
+
 /-- Extension along a region inclusion as an `R`-linear map: `A ↦ A ⊗ 1` is linear in `A`. -/
 public def extendAlongRegionₗ (f : S ⟶ T) :
     Matrix (S.carrier -> Fin d) (S.carrier -> Fin d) R →ₗ[R]
@@ -398,6 +476,40 @@ public def extendAlongRegionₐ {X : Type u} [DecidableEq X] {d : ℕ} {R : Type
     [CommRing R] {S T : RegionCat X} (f : S ⟶ T)
     (A : Matrix (S.carrier -> Fin d) (S.carrier -> Fin d) R) :
     extendAlongRegionₐ f A = extendAlongRegion f A := rfl
+
+/-- Extension along a region inclusion as a `*`-algebra homomorphism, for the conjugate
+transpose on matrices (`extendAlongRegion_conjTranspose`). Over a ring with `TrivialStar R`,
+that `star` is the transpose. -/
+public def extendAlongRegionₛₐ {X : Type u} [DecidableEq X] {d : ℕ} {R : Type u} [CommRing R]
+    [StarRing R] {S T : RegionCat X} (f : S ⟶ T) :
+    Matrix (S.carrier -> Fin d) (S.carrier -> Fin d) R →⋆ₐ[R]
+      Matrix (T.carrier -> Fin d) (T.carrier -> Fin d) R :=
+  { extendAlongRegionₐ f with map_star' := extendAlongRegion_conjTranspose f }
+
+@[simp] public lemma extendAlongRegionₛₐ_apply {X : Type u} [DecidableEq X] {d : ℕ}
+    {R : Type u} [CommRing R] [StarRing R] {S T : RegionCat X} (f : S ⟶ T)
+    (A : Matrix (S.carrier -> Fin d) (S.carrier -> Fin d) R) :
+    extendAlongRegionₛₐ f A = extendAlongRegion f A := rfl
+
+/-- **Microcausality**: over a commutative `R`, observables extended from disjoint regions
+`S, T ⊆ U` commute, `(A ⊗ 1) (1 ⊗ B) = (1 ⊗ B) (A ⊗ 1)`; both sides are `A ⊗ B` entrywise
+(`extendAlongRegion_mul_extendAlongRegion_apply`). -/
+public lemma extendAlongRegion_commute {X : Type u} [DecidableEq X] {d : ℕ} {R : Type u}
+    [CommRing R] {S T U : RegionCat X} (hST : Disjoint S.carrier T.carrier) (f : S ⟶ U)
+    (g : T ⟶ U) (A : Matrix (S.carrier -> Fin d) (S.carrier -> Fin d) R)
+    (B : Matrix (T.carrier -> Fin d) (T.carrier -> Fin d) R) :
+    extendAlongRegion f A * extendAlongRegion g B =
+      extendAlongRegion g B * extendAlongRegion f A := by
+  funext v w
+  rw [extendAlongRegion_mul_extendAlongRegion_apply hST,
+    extendAlongRegion_mul_extendAlongRegion_apply hST.symm]
+  by_cases h : ∀ u : U.carrier, (u : X) ∉ S.carrier → (u : X) ∉ T.carrier → v u = w u
+  · have h' : ∀ u : U.carrier, (u : X) ∉ T.carrier → (u : X) ∉ S.carrier → v u = w u :=
+      fun u hT hS => h u hS hT
+    rw [ite_eq_left h, ite_eq_left h', mul_comm]
+  · have h' : ¬ ∀ u : U.carrier, (u : X) ∉ T.carrier → (u : X) ∉ S.carrier → v u = w u :=
+      fun h' => h fun u hS hT => h' u hT hS
+    rw [ite_eq_right h, ite_eq_right h']
 
 variable [PartialOrder R]
 
@@ -431,6 +543,19 @@ end Stoquastic
 
 end ExtendAlongRegion
 
+/-! ### The net of all matrices -/
+
+/-- **The net of qudit matrix algebras** `RegionCat X ⥤ StarAlgCat R`: a region `S` is sent to
+the `*`-algebra of all matrices on its qudit configurations (`star` the conjugate transpose), and
+a region inclusion `S ⟶ T` to `A ↦ A ⊗ 1` (`extendAlongRegionₛₐ`). No order on `R` is needed;
+this is the stoquastic net below with its cones forgotten (`stoquasticFunctor_forgetCone`). -/
+public def quditMatrixFunctor (X : Type u) [DecidableEq X] (d : ℕ) (R : Type u) [CommRing R]
+    [StarRing R] : RegionCat X ⥤ StarAlgCat R where
+  obj S := StarAlgCat.of (Matrix (S.carrier -> Fin d) (S.carrier -> Fin d) R)
+  map f := StarAlgCat.ofHom (extendAlongRegionₛₐ f)
+  map_id _ := StarAlgCat.hom_ext fun A => extendAlongRegion_id A
+  map_comp f g := StarAlgCat.hom_ext fun A => extendAlongRegion_comp f g A
+
 /-! ### The net of stoquastic cones
 
 Assembling the two halves: each region carries the cone of stoquastic matrices on its
@@ -440,32 +565,40 @@ which is linear and cone-preserving. -/
 /-- **The net of stoquastic Hamiltonians as a functor** `RegionCat X ⥤ PointedConeAlgCat R`: a
 region `S` is sent to the matrix algebra on its qudit configurations together with its
 stoquastic cone, and a region inclusion `S ⟶ T` to `A ↦ A ⊗ 1`, extension by the identity on the
-new qudits `T \ S`. That map is an algebra homomorphism, not merely a linear one
-(`extendAlongRegionₐ`), and it carries stoquastic matrices to stoquastic matrices
+new qudits `T \ S`. That map is a `*`-algebra homomorphism for the transpose, not merely a
+linear one (`extendAlongRegionₛₐ`), and it carries stoquastic matrices to stoquastic matrices
 (`isStoquastic_extendAlongRegion`). Functoriality is `extendAlongRegion_id` and
 `extendAlongRegion_comp`. -/
 public def stoquasticFunctor (X : Type u) [DecidableEq X] (d : ℕ) (R : Type u) [CommRing R]
-    [PartialOrder R] [IsOrderedRing R] : RegionCat X ⥤ PointedConeAlgCat R where
+    [PartialOrder R] [IsOrderedRing R] [StarRing R] [TrivialStar R] :
+    RegionCat X ⥤ PointedConeAlgCat R where
   obj S := PointedConeAlgCat.of (Matrix (S.carrier -> Fin d) (S.carrier -> Fin d) R)
     (stoquasticCone (Rows := S))
-  map f := PointedConeAlgCat.homOfMapsTo (extendAlongRegionₐ f)
+  map f := PointedConeAlgCat.homOfMapsTo (extendAlongRegionₛₐ f)
     fun _ hA => isStoquastic_extendAlongRegion f hA
   map_id _ := PointedConeAlgCat.hom_ext fun A => extendAlongRegion_id A
   map_comp f g := PointedConeAlgCat.hom_ext fun A => extendAlongRegion_comp f g A
+
+/-- Forgetting the stoquastic cones leaves the net of all qudit matrix algebras. -/
+public theorem stoquasticFunctor_forgetCone (X : Type u) [DecidableEq X] (d : ℕ) (R : Type u)
+    [CommRing R] [PartialOrder R] [IsOrderedRing R] [StarRing R] [TrivialStar R] :
+    stoquasticFunctor X d R ⋙ PointedConeAlgCat.forgetCone = quditMatrixFunctor X d R := rfl
 
 /-- The stoquastic net seen as a net of cones in plain modules: `stoquasticFunctor` followed by
 `PointedConeAlgCat.forgetMul`, forgetting the matrix multiplication and remembering of
 `A ↦ A ⊗ 1` only that it is linear (`extendAlongRegionₗ`). The objects and the underlying maps
 are unchanged, so this is the same net with less structure recorded, not a different one. -/
 public def stoquasticFunctorₗ (X : Type u) [DecidableEq X] (d : ℕ) (R : Type u) [CommRing R]
-    [PartialOrder R] [IsOrderedRing R] : RegionCat X ⥤ PointedConeCat R :=
+    [PartialOrder R] [IsOrderedRing R] [StarRing R] [TrivialStar R] :
+    RegionCat X ⥤ PointedConeCat R :=
   stoquasticFunctor X d R ⋙ PointedConeAlgCat.forgetMul
 
 @[simp] public lemma stoquasticFunctorₗ_obj_cone (X : Type u) [DecidableEq X] (d : ℕ)
-    (R : Type u) [CommRing R] [PartialOrder R] [IsOrderedRing R] (S : RegionCat X) :
+    (R : Type u) [CommRing R] [PartialOrder R] [IsOrderedRing R] [StarRing R] [TrivialStar R]
+    (S : RegionCat X) :
     ((stoquasticFunctorₗ X d R).obj S).cone = stoquasticCone (Rows := S) := rfl
 
 @[simp] public lemma toLinearMap_stoquasticFunctorₗ_map (X : Type u) [DecidableEq X] (d : ℕ)
-    (R : Type u) [CommRing R] [PartialOrder R] [IsOrderedRing R] {S T : RegionCat X}
-    (f : S ⟶ T) :
+    (R : Type u) [CommRing R] [PartialOrder R] [IsOrderedRing R] [StarRing R] [TrivialStar R]
+    {S T : RegionCat X} (f : S ⟶ T) :
     PointedConeCat.toLinearMap ((stoquasticFunctorₗ X d R).map f) = extendAlongRegionₗ f := rfl

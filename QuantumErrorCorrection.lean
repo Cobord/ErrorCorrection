@@ -19,6 +19,8 @@ import QuantumErrorCorrection.QCABaseChange
 import QuantumErrorCorrection.QCAClass
 import QuantumErrorCorrection.QuasiLocalAlgebra
 import QuantumErrorCorrection.RegionCat
+import QuantumErrorCorrection.StarAlgCat
+import QuantumErrorCorrection.QuditMatrixQuasiLocalAlgebra
 import QuantumErrorCorrection.RegionNbhd
 import QuantumErrorCorrection.Stacking
 import QuantumErrorCorrection.Stoquastic
