@@ -1,7 +1,7 @@
 import Mathlib.Algebra.Category.ModuleCat.Monoidal.Basic
 import Mathlib.CategoryTheory.Monoidal.Braided.Basic
 import Mathlib.CategoryTheory.Monoidal.Transport
-import QuantumErrorCorrection.SuperStarTensor
+import QuantumErrorCorrection.AlgebraicCategories.SuperStarTensor
 
 /-!
 # `SuperStarAlgCat 𝕜` is monoidal under the super tensor product

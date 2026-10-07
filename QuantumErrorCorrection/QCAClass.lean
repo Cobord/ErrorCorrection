@@ -8,7 +8,8 @@ Everything here holds with `𝕜` an arbitrary commutative `*`-ring and `X` a me
 finite closed balls. No normality of circuits is assumed.
 
 * `QCAClass A := QCA A ⧸ circuitSubgroup A`: QCAs on `A` modulo circuits (left cosets). Stacking
-  descends to classes (`QCAClass.stack`), because stacking maps circuits to circuits.
+  descends to classes (`QCAClass.stack`), because stacking maps circuits to circuits. On a
+  finite site set `QCAClass A` is a subsingleton.
 * `QCA.transport η`: conjugation by the spread-`0` isomorphism of a net isomorphism `η`. It maps
   layers to layers with the same blocks, hence circuits to circuits
   (`QCA.transport_mem_circuitSubgroup`).
@@ -193,6 +194,12 @@ namespace QCAClass
 open QCA
 
 variable {A B : BoundedSpreadCat X 𝕜}
+
+/-- On a finite site set there is only one class: every QCA is a circuit
+(`QCA.mem_circuitSubgroup_of_finite`). -/
+instance [Finite X] : Subsingleton (QCAClass A) :=
+  ⟨fun a b => Quotient.inductionOn₂' a b fun _ _ =>
+    QuotientGroup.eq.2 (mem_circuitSubgroup_of_finite _)⟩
 
 /-- Stacking descends to classes: `[u] ⊗ [v] = [u ⊗ v]`. -/
 def stack : QCAClass A → QCAClass B → QCAClass (A ⊗ B) :=

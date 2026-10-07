@@ -5,7 +5,7 @@ Authors: Ammar Husain
 -/
 module
 
-public import QuantumErrorCorrection.PointedConeAlgCat
+public import QuantumErrorCorrection.AlgebraicCategories.PointedConeAlgCat
 public import QuantumErrorCorrection.RegionCat
 public import Mathlib.CategoryTheory.Functor.Basic
 public import Mathlib.Data.Fintype.Basic

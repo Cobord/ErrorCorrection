@@ -3,14 +3,14 @@ import Mathlib.Algebra.MonoidAlgebra.Basic
 import Mathlib.Algebra.Star.StarAlgHom
 import Mathlib.CategoryTheory.Functor.Basic
 import QuantumErrorCorrection.GrpInclCat
-import QuantumErrorCorrection.QuasiLocalAlgebra
+import QuantumErrorCorrection.AlgebraicCategories.SuperStarAlgCat
 
 /-!
 # The group algebra as a `ZMod 2`-graded `*`-algebra
 
 For a fixed group `G` and a commutative `*`-ring `𝕜`, this file makes the group algebra
 `MonoidAlgebra 𝕜 G` into a `SuperStarAlgebra 𝕜 (MonoidAlgebra 𝕜 G)` (see
-`QuasiLocalAlgebra.lean`):
+`SuperStarAlgCat.lean`):
 
 * `star` extends group inversion: `star (single g c) = single g⁻¹ (star c)`. It is built as an
   `AddMonoidHom` (via `Finsupp.liftAddHom`) so that additivity is free, and the `StarRing`

@@ -1,4 +1,4 @@
-import QuantumErrorCorrection.GroupAlgebraStar
+import QuantumErrorCorrection.AlgebraicCategories.GroupAlgebraStar
 import QuantumErrorCorrection.PauliCliffordFunctor
 import QuantumErrorCorrection.QuasiLocalAlgebra
 

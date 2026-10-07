@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(timeout 900 lake build QuantumErrorCorrection.FlatCommStarRingCat)"
+      "Bash(timeout 900 lake build QuantumErrorCorrection.AlgebraicCategories.FlatCommStarRingCat)"
     ]
   }
 }

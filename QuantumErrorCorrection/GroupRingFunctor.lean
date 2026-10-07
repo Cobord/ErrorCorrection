@@ -2,8 +2,8 @@ import Mathlib.CategoryTheory.Monoidal.Action.End
 import Mathlib.LinearAlgebra.FreeModule.Basic
 import Mathlib.RingTheory.Flat.Basic
 import QuantumErrorCorrection.CommGrpInclCat
-import QuantumErrorCorrection.FlatCommStarRingCat
-import QuantumErrorCorrection.GroupAlgebraStar
+import QuantumErrorCorrection.AlgebraicCategories.FlatCommStarRingCat
+import QuantumErrorCorrection.AlgebraicCategories.GroupAlgebraStar
 
 /-!
 # The group ring as a symmetric monoidal functor

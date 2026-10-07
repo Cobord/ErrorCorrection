@@ -5,8 +5,8 @@ Authors: Ammar Husain
 -/
 module
 
-public import QuantumErrorCorrection.PointedConeCat
-public import QuantumErrorCorrection.StarAlgCat
+public import QuantumErrorCorrection.AlgebraicCategories.PointedConeCat
+public import QuantumErrorCorrection.AlgebraicCategories.StarAlgCat
 public import Mathlib.Algebra.Algebra.Hom
 public import Mathlib.Algebra.Star.StarAlgHom
 public import Mathlib.CategoryTheory.Category.Basic
@@ -26,9 +26,9 @@ algebra `Matrix (S.carrier → Fin d) (S.carrier → Fin d) R` and every structu
 `A ↦ A ⊗ 1`, extension by the identity on the new qudits, which is not just linear but a unital
 `*`-algebra map — `(A ⊗ 1) (B ⊗ 1) = (A B) ⊗ 1` and `(A ⊗ 1)ᴴ = Aᴴ ⊗ 1`. Recording that
 structure in the morphisms is what makes a functor into this category a net of *algebras* of
-observables, comparable to the `SuperStarAlgCat`-valued nets of `QuasiLocalAlgebra.lean` (which
-receives this category through the purely even functor there), rather than merely a net of
-modules.
+observables, comparable to the `SuperStarAlgCat`-valued nets of `QuasiLocalAlgebra.lean`
+(`SuperStarAlgCat` receives this category through `forgetCone` and the purely even functor of
+`SuperStarAlgCat.lean`), rather than merely a net of modules.
 
 The base ring `R` is required to be commutative (as `Algebra R A` demands) and ordered, since it
 is simultaneously the ring of scalars of the algebras and the ring whose non-negative elements

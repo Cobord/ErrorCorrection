@@ -1,6 +1,7 @@
 import Mathlib.CategoryTheory.Monoidal.FunctorCategory
 import Mathlib.RingTheory.Flat.Basic
-import QuantumErrorCorrection.SuperStarAlgCatMonoidal
+import QuantumErrorCorrection.AlgebraicCategories.SuperStarAlgCatMonoidal
+import QuantumErrorCorrection.QuasiLocalAlgebra
 
 /-!
 # Stacking quasi-local algebras

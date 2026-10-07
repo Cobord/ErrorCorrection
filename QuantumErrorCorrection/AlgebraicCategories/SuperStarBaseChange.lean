@@ -1,7 +1,7 @@
 import Mathlib.RingTheory.Flat.Basic
 import Mathlib.RingTheory.GradedAlgebra.TensorProduct
-import QuantumErrorCorrection.FlatCommStarRingCat
-import QuantumErrorCorrection.SuperStarTensor
+import QuantumErrorCorrection.AlgebraicCategories.FlatCommStarRingCat
+import QuantumErrorCorrection.AlgebraicCategories.SuperStarTensor
 
 /-!
 # Base change of super `*`-algebras
@@ -510,28 +510,3 @@ theorem baseChange_map_injective {A B : SuperStarAlgCat R} {f : A ⟶ B}
   exact baseChangeHom_injective hf
 
 end SuperStarAlgCat
-
-namespace QuasiLocalAlgebra
-
-variable {X : Type u} [DecidableEq X] {R S : FlatCommStarRingCat.{u}} (σ : R ⟶ S)
-
-/-- Base change of a quasi-local algebra along a flat star ring map `σ`: the local algebra on `T`
-is `S ⊗[R] A(T)`. Isotony survives because `S` is flat over `R`. Microcausality is checked on
-generators `1 ⊗ a`, using that `σ` maps Koszul signs to Koszul signs. -/
-def baseChange (A : QuasiLocalAlgebra X R) : QuasiLocalAlgebra X S where
-  net := A.net ⋙ SuperStarAlgCat.baseChange σ
-  isotony h := SuperStarAlgCat.baseChange_map_injective σ (A.isotony h)
-  superCommuting {T₁ T₂} hT {i j} {x} {y} hx hy := by
-    let _ := σ.toAlgebra
-    have := σ.starModule
-    exact baseChangeHom_superCommute (A.net.map (RegionCat.homOfSubset Finset.subset_union_left)).1
-      (A.net.map (RegionCat.homOfSubset Finset.subset_union_right)).1
-      (fun ha hc => A.superCommuting hT ha hc) hx hy
-
-theorem baseChange_flat (A : QuasiLocalAlgebra X R) (hA : ∀ T, Module.Flat R (A.net.obj T))
-    (T : RegionCat X) : Module.Flat S ((A.baseChange σ).net.obj T) := by
-  let _ := σ.toAlgebra
-  have := hA T
-  exact Module.Flat.baseChange R S (A.net.obj T)
-
-end QuasiLocalAlgebra

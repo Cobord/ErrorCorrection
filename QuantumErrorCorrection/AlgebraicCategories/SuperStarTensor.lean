@@ -1,5 +1,5 @@
 import Mathlib.RingTheory.TensorProduct.Basic
-import QuantumErrorCorrection.QuasiLocalAlgebra
+import QuantumErrorCorrection.AlgebraicCategories.SuperStarAlgCat
 
 /-!
 # Super tensor products of super `*`-algebras

@@ -17,7 +17,7 @@ bundled category of `*`-algebras, so this is its own structure with its own `Cat
 instance, like `RegionCat` and `PointedConeCat`.
 
 It sits between `PointedConeAlgCat` (which forgets its cone to it) and `SuperStarAlgCat` in
-`QuasiLocalAlgebra.lean` (which receives it as the purely even super `*`-algebras). It lives in
+`SuperStarAlgCat.lean` (which receives it as the purely even super `*`-algebras). It lives in
 its own module-style file so that both can import it.
 -/
 
